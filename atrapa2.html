@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Same 🍆 Forever</title>
+    <style>
+        /* Estilos Generales (sin cambios respecto a la versión anterior) */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background-color: #f7c5cc;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .screen {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
+            color: #d6336c;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #d6336c;
+            font-size: 1.8em;
+        }
+
+        input[type="text"] {
+            padding: 15px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            border: 2px solid #d6336c;
+            margin-bottom: 20px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background-color: #d6336c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #a61e4d;
+        }
+
+        /* Pantalla de Juego */
+        #game-screen {
+            position: relative;
+            justify-content: flex-start;
+        }
+
+        #game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-bottom: 2px solid #d6336c;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        #player-name-display, #timer-display, #score-display {
+            font-size: 1em;
+            font-weight: bold;
+            color: #a61e4d;
+            margin: 0 5px;
+        }
+
+        #play-area {
+            width: 100%;
+            height: calc(100vh - 70px);
+            position: relative;
+            overflow: hidden;
+            margin-top: 60px;
+            background: linear-gradient(to bottom, #fce4ec, #f8bbd0);
+        }
+
+        .icon {
+            position: absolute;
+            font-size: 2.5em;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease-out;
+        }
+        .icon:active {
+            transform: scale(1.2);
+        }
+
+        /* Pantalla de Countdown */
+        #countdown-display {
+            font-size: 5em;
+            font-weight: bold;
+            color: #d6336c;
+        }
+
+        /* Pantalla Final */
+        #final-score-display {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        #share-buttons button {
+            font-size: 0.9em;
+            padding: 10px 15px;
+            margin: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla Inicial -->
+    <div id="start-screen" class="screen active">
+        <h1>Same 🍆 Forever</h1>
+        <input type="text" id="player-name-input" placeholder="Tu nombre o apodo">
+        <button id="start-button">¡A Jugar!</button>
+    </div>
+
+    <!-- Pantalla de Cuenta Regresiva -->
+    <div id="countdown-screen" class="screen">
+        <div id="countdown-display">3</div>
+    </div>
+
+    <!-- Pantalla de Juego -->
+    <div id="game-screen" class="screen">
+        <div id="game-header">
+            <span id="player-name-display">Jugador</span>
+            <span id="timer-display">Tiempo: 60s</span>
+            <span id="score-display">Puntos: 0</span>
+        </div>
+        <div id="play-area">
+            <!-- Los iconos se agregarán aquí dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Pantalla Final -->
+    <div id="end-screen" class="screen">
+        <h2>¡Tiempo terminado!</h2>
+        <p id="final-score-display">Conseguiste X puntos</p>
+        <div id="share-buttons">
+            <button id="share-whatsapp-button">Compartir en WhatsApp</button>
+            <button id="copy-score-button">Copiar Puntuación</button>
+        </div>
+        <button id="restart-button">Jugar de Nuevo</button>
+        <button id="home-button">Volver al Inicio</button>
+    </div>
+
+    <script>
+        // Variables de estado del juego
+        let playerName = '';
+        let score = 0;
+        let timeLeft = 60; // Duración del juego en segundos
+        let gameTimerInterval;
+        let iconSpawnInterval;
+        let countdownTimerInterval;
+        let activeIcons = []; 
+
+        // --- CONFIGURACIÓN DE ICONOS ---
+        const TARGET_ICON = '🍆'; // El icono que da puntos
+        const OTHER_ICONS = ['🍑', '🍒', '🍌', '🌶️', '🍩']; // Iconos "distractores"
+
+        // Crear una lista ponderada para que TARGET_ICON aparezca más frecuentemente
+        // Por ejemplo, 7 instancias de TARGET_ICON y 1 de cada OTRO_ICON
+        // Esto significa que TARGET_ICON tiene una probabilidad de 7 / (7 + número de OTROS)
+        const ICONS_TO_SPAWN = [
+            TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, // 7 veces 🍆
+            ...OTHER_ICONS  // una vez cada uno de los otros
+        ];
+        // Si quisieras más proporción aún, añade más TARGET_ICON aquí arriba.
+        // Ejemplo: ICONS_TO_SPAWN tiene 7 🍆 y 5 otros. Probabilidad de 🍆 es 7/12 (aprox 58%)
+
+        // Elementos del DOM (sin cambios)
+        const startScreen = document.getElementById('start-screen');
+        const countdownScreen = document.getElementById('countdown-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+
+        const playerNameInput = document.getElementById('player-name-input');
+        const startButton = document.getElementById('start-button');
+        
+        const countdownDisplay = document.getElementById('countdown-display');
+
+        const playerNameDisplay = document.getElementById('player-name-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const playArea = document.getElementById('play-area');
+
+        const finalScoreDisplay = document.getElementById('final-score-display');
+        const restartButton = document.getElementById('restart-button');
+        const homeButton = document.getElementById('home-button');
+        const shareWhatsappButton = document.getElementById('share-whatsapp-button');
+        const copyScoreButton = document.getElementById('copy-score-button');
+
+        // --- Funciones de Navegación entre Pantallas (sin cambios) ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // --- Lógica de la Pantalla Inicial (sin cambios) ---
+        startButton.addEventListener('click', () => {
+            playerName = playerNameInput.value.trim();
+            if (playerName === '') {
+                playerName = 'Invitada Especial';
+            }
+            localStorage.setItem('bacheloretteGamePlayerName', playerName);
+            playerNameDisplay.textContent = playerName;
+            startInitialCountdown();
+        });
+
+        window.addEventListener('load', () => {
+            const savedName = localStorage.getItem('bacheloretteGamePlayerName');
+            if (savedName) {
+                playerNameInput.value = savedName;
+            }
+        });
+
+        // --- Lógica de la Cuenta Regresiva Inicial (sin cambios) ---
+        function startInitialCountdown() {
+            showScreen('countdown-screen');
+            let count = 3;
+            countdownDisplay.textContent = count;
+            
+            countdownTimerInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownDisplay.textContent = count;
+                } else {
+                    clearInterval(countdownTimerInterval);
+                    startGame();
+                }
+            }, 1000);
+        }
+
+        // --- Lógica Principal del Juego (sin cambios significativos, solo usa ICONS_TO_SPAWN) ---
+        function startGame() {
+            showScreen('game-screen');
+            score = 0;
+            timeLeft = 60; 
+            updateScoreDisplay();
+            updateTimerDisplay();
+            clearPlayArea(); 
+
+            gameTimerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            iconSpawnInterval = setInterval(spawnIcon, 700); // Puedes ajustar este valor (ej. 700ms)
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = `Puntos: ${score}`;
+        }
+
+        function updateTimerDisplay() {
+            timerDisplay.textContent = `Tiempo: ${timeLeft}s`;
+        }
+
+        function clearPlayArea() {
+            playArea.innerHTML = '';
+            activeIcons = [];
+        }
+
+        // --- Lógica de los Iconos ---
+        function spawnIcon() {
+            const iconElement = document.createElement('div');
+            iconElement.classList.add('icon');
+            // Selecciona un icono de la lista ponderada ICONS_TO_SPAWN
+            iconElement.textContent = ICONS_TO_SPAWN[Math.floor(Math.random() * ICONS_TO_SPAWN.length)];
+            
+            const movementType = Math.random();
+
+            if (movementType < 0.6) { 
+                iconElement.style.left = Math.random() * (playArea.clientWidth - 40) + 'px';
+                iconElement.style.top = '-50px';
+                animateFall(iconElement);
+            } else if (movementType < 0.8) { 
+                iconElement.style.top = Math.random() * (playArea.clientHeight - 60) + 'px';
+                iconElement.style.left = '-50px'; 
+                animateHorizontal(iconElement, 'left-to-right');
+            } else { 
+                iconElement.style.top = Math.random() * (playArea.clientHeight - 60) + 'px';
+                iconElement.style.left = playArea.clientWidth + 'px'; 
+                animateHorizontal(iconElement, 'right-to-left');
+            }
+            
+            iconElement.addEventListener('click', handleIconClick);
+            iconElement.addEventListener('touchstart', handleIconClick, { passive: true });
+
+            playArea.appendChild(iconElement);
+            activeIcons.push(iconElement);
+        }
+        
+        function animateFall(iconElement) {
+            let fallSpeed = Math.random() * 3 + 2; 
+            function move() {
+                if (!document.body.contains(iconElement)) return;
+                let currentTop = parseFloat(iconElement.style.top);
+                iconElement.style.top = currentTop + fallSpeed + 'px';
+                if (currentTop < playArea.clientHeight) {
+                    requestAnimationFrame(move);
+                } else {
+                    removeIcon(iconElement);
+                }
+            }
+            requestAnimationFrame(move);
+        }
+
+        function animateHorizontal(iconElement, direction) {
+            let horizontalSpeed = Math.random() * 2.5 + 1.5; 
+            function move() {
+                if (!document.body.contains(iconElement)) return;
+                let currentLeft = parseFloat(iconElement.style.left);
+                if (direction === 'left-to-right') {
+                    iconElement.style.left = currentLeft + horizontalSpeed + 'px';
+                    if (currentLeft > playArea.clientWidth) {
+                        removeIcon(iconElement);
+                    } else {
+                        requestAnimationFrame(move);
+                    }
+                } else { 
+                    iconElement.style.left = currentLeft - horizontalSpeed + 'px';
+                    if (currentLeft < -50) { 
+                        removeIcon(iconElement);
+                    } else {
+                        requestAnimationFrame(move);
+                    }
+                }
+            }
+            requestAnimationFrame(move);
+        }
+
+        // --- MODIFICADO: Lógica de Click en Icono ---
+        function handleIconClick(event) {
+            event.preventDefault();
+            const clickedIcon = event.currentTarget;
+            
+            // Solo sumar puntos si es el TARGET_ICON (🍆)
+            if (clickedIcon.textContent === TARGET_ICON) {
+                score++;
+                updateScoreDisplay();
+                // Aquí podrías poner un sonido de "punto"
+            } else {
+                // No se suman puntos por otros iconos
+                // Aquí podrías poner un sonido de "error" o "distracción"
+            }
+
+            // El icono se elimina siempre al ser tocado
+            removeIcon(clickedIcon);
+        }
+
+        function removeIcon(iconElement) {
+            if (iconElement && iconElement.parentNode) {
+                iconElement.parentNode.removeChild(iconElement);
+            }
+            activeIcons = activeIcons.filter(icon => icon !== iconElement);
+        }
+
+
+        // --- Lógica del Final del Juego (sin cambios) ---
+        function endGame() {
+            clearInterval(gameTimerInterval);
+            clearInterval(iconSpawnInterval);
+            
+            activeIcons.forEach(icon => {
+                if (icon && icon.parentNode) {
+                    icon.parentNode.removeChild(icon);
+                }
+            });
+            activeIcons = [];
+
+            finalScoreDisplay.textContent = `${playerName}, ¡conseguiste ${score} puntos!`;
+            localStorage.setItem(`bacheloretteGameScore_${playerName}`, score);
+            showScreen('end-screen');
+        }
+
+        // --- Botones de la Pantalla Final (sin cambios) ---
+        restartButton.addEventListener('click', () => {
+            startInitialCountdown();
+        });
+
+        homeButton.addEventListener('click', () => {
+            showScreen('start-screen');
+        });
+
+        shareWhatsappButton.addEventListener('click', () => {
+            const message = `¡He conseguido ${score} puntos en el juego de despedida "Same 🍆 Forever"! ¿Puedes superarme?`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
+        copyScoreButton.addEventListener('click', () => {
+            const textToCopy = `¡${playerName} consiguió ${score} puntos en "Same 🍆 Forever"!`;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('¡Puntuación copiada al portapapeles!');
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+                alert('No se pudo copiar la puntuación. Intenta manualmente.');
+            });
+        });
+
+    </script>
+</body>
+</html>
