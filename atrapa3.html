@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Same 🍆 Forever</title>
+    <style>
+        /* Estilos Generales (sin cambios importantes, solo se añade footer y popup) */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background-color: #f7c5cc;
+            color: #333;
+            display: flex;
+            flex-direction: column; /* Para acomodar el footer */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .screen {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1; /* Para que las pantallas ocupen el espacio disponible menos el footer */
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
+            color: #d6336c;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #d6336c;
+            font-size: 1.8em;
+        }
+
+        input[type="text"] {
+            padding: 15px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            border: 2px solid #d6336c;
+            margin-bottom: 20px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background-color: #d6336c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #a61e4d;
+        }
+
+        /* Pantalla de Juego */
+        #game-screen {
+            position: relative;
+            justify-content: flex-start;
+        }
+
+        #game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-bottom: 2px solid #d6336c;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        #player-name-display, #timer-display, #score-display {
+            font-size: 1em;
+            font-weight: bold;
+            color: #a61e4d;
+            margin: 0 5px;
+        }
+
+        #play-area {
+            width: 100%;
+            /* Altura ajustada para el header fijo */
+            height: calc(100% - 60px); /* Ajustar 100% del contenedor padre (game-screen, que es flex-grow 1) */
+            position: relative;
+            overflow: hidden;
+            margin-top: 60px;
+            background: linear-gradient(to bottom, #fce4ec, #f8bbd0);
+        }
+
+
+        .icon {
+            position: absolute;
+            font-size: 2.5em;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease-out;
+        }
+        .icon:active {
+            transform: scale(1.2);
+        }
+
+        /* Pantalla de Countdown */
+        #countdown-display {
+            font-size: 5em;
+            font-weight: bold;
+            color: #d6336c;
+        }
+
+        /* Pantalla Final */
+        #final-score-display {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        #share-buttons button {
+            font-size: 0.9em;
+            padding: 10px 15px;
+            margin: 5px;
+        }
+
+        /* Popup de Bomba */
+        #bomb-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em; /* Carita triste grande */
+            color: red;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            z-index: 1000;
+            display: none; /* Oculto por defecto */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Pie de página */
+        footer {
+            width: 100%;
+            padding: 10px 0;
+            font-size: 0.8em;
+            color: #777;
+            text-align: center;
+            background-color: #f1f1f1; /* Un gris claro para el footer */
+            border-top: 1px solid #ddd;
+            position: fixed; /* Opcional: si quieres que siempre esté visible abajo */
+            bottom: 0;
+            left: 0;
+            z-index: 5; /* Detrás del header si se solapan, pero delante del contenido general */
+        }
+         /* Ajuste para que el contenido principal no quede debajo del footer fijo */
+        body {
+            padding-bottom: 40px; /* Altura aproximada del footer + un poco de margen */
+            box-sizing: border-box;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla Inicial -->
+    <div id="start-screen" class="screen active">
+        <h1>Same 🍆 Forever</h1>
+        <input type="text" id="player-name-input" placeholder="Tu nombre o apodo">
+        <button id="start-button">¡A Jugar!</button>
+    </div>
+
+    <!-- Pantalla de Cuenta Regresiva -->
+    <div id="countdown-screen" class="screen">
+        <div id="countdown-display">3</div>
+    </div>
+
+    <!-- Pantalla de Juego -->
+    <div id="game-screen" class="screen">
+        <div id="game-header">
+            <span id="player-name-display">Jugador</span>
+            <span id="timer-display">Tiempo: 60s</span>
+            <span id="score-display">Puntos: 0</span>
+        </div>
+        <div id="play-area">
+            <!-- Los iconos se agregarán aquí dinámicamente -->
+        </div>
+        <div id="bomb-popup">😢</div> <!-- Popup para la bomba -->
+    </div>
+
+    <!-- Pantalla Final -->
+    <div id="end-screen" class="screen">
+        <h2>¡Tiempo terminado!</h2>
+        <p id="final-score-display">Conseguiste X puntos</p>
+        <div id="share-buttons">
+            <button id="share-whatsapp-button">Compartir en WhatsApp</button>
+            <button id="copy-score-button">Copiar Puntuación</button>
+        </div>
+        <button id="restart-button">Jugar de Nuevo</button>
+        <button id="home-button">Volver al Inicio</button>
+    </div>
+
+    <footer>
+        Desarrollado por Vicente R.
+    </footer>
+
+    <script>
+        // Variables de estado del juego
+        let playerName = '';
+        let score = 0;
+        const INITIAL_TIME = 60; // Tiempo inicial del juego
+        let timeLeft = INITIAL_TIME; 
+        let gameTimerInterval;
+        let iconSpawnTimeout; // Cambiado de Interval a Timeout para controlar mejor la velocidad
+        let countdownTimerInterval;
+        let activeIcons = []; 
+
+        const MIN_SPAWN_INTERVAL = 250; // Intervalo mínimo de aparición de iconos (en ms)
+        const INITIAL_SPAWN_INTERVAL = 900; // Intervalo inicial
+        let currentSpawnInterval = INITIAL_SPAWN_INTERVAL;
+
+        // --- CONFIGURACIÓN DE ICONOS ---
+        const TARGET_ICON = '🍆'; 
+        const BOMB_ICON = '💣';
+        const PENALTY_POINTS = 1; // Puntos a restar por tocar un icono incorrecto
+
+        const OTHER_ICONS = ['🍑', '🍒', '🍌', '🌶️', '🍩']; 
+
+        // Lista ponderada para los iconos que no son bomba
+        const NON_BOMB_ICONS_TO_SPAWN = [
+            TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, TARGET_ICON, 
+            ...OTHER_ICONS  
+        ];
+
+        // Elementos del DOM
+        const startScreen = document.getElementById('start-screen');
+        const countdownScreen = document.getElementById('countdown-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+
+        const playerNameInput = document.getElementById('player-name-input');
+        const startButton = document.getElementById('start-button');
+        
+        const countdownDisplay = document.getElementById('countdown-display');
+
+        const playerNameDisplay = document.getElementById('player-name-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const playArea = document.getElementById('play-area');
+        const bombPopup = document.getElementById('bomb-popup');
+
+        const finalScoreDisplay = document.getElementById('final-score-display');
+        const restartButton = document.getElementById('restart-button');
+        const homeButton = document.getElementById('home-button');
+        const shareWhatsappButton = document.getElementById('share-whatsapp-button');
+        const copyScoreButton = document.getElementById('copy-score-button');
+
+        // --- Funciones de Navegación entre Pantallas ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            // Mostrar u ocultar footer según la pantalla
+            const footer = document.querySelector('footer');
+            if (screenId === 'game-screen' || screenId === 'countdown-screen') {
+                footer.style.display = 'none'; // Ocultar en juego y countdown
+            } else {
+                footer.style.display = 'block';
+            }
+        }
+
+
+        // --- Lógica de la Pantalla Inicial ---
+        startButton.addEventListener('click', () => {
+            playerName = playerNameInput.value.trim();
+            if (playerName === '') {
+                playerName = 'Invitada Especial';
+            }
+            localStorage.setItem('bacheloretteGamePlayerName', playerName);
+            playerNameDisplay.textContent = playerName;
+            startInitialCountdown();
+        });
+
+        window.addEventListener('load', () => {
+            const savedName = localStorage.getItem('bacheloretteGamePlayerName');
+            if (savedName) {
+                playerNameInput.value = savedName;
+            }
+            showScreen('start-screen'); // Asegurar que el footer se muestre/oculte correctamente al cargar
+        });
+
+        // --- Lógica de la Cuenta Regresiva Inicial ---
+        function startInitialCountdown() {
+            showScreen('countdown-screen');
+            let count = 3;
+            countdownDisplay.textContent = count;
+            
+            countdownTimerInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownDisplay.textContent = count;
+                } else {
+                    clearInterval(countdownTimerInterval);
+                    startGame();
+                }
+            }, 1000);
+        }
+
+        // --- Lógica Principal del Juego ---
+        function startGame() {
+            showScreen('game-screen');
+            score = 0;
+            timeLeft = INITIAL_TIME; 
+            currentSpawnInterval = INITIAL_SPAWN_INTERVAL; // Reiniciar intervalo de spawn
+            updateScoreDisplay();
+            updateTimerDisplay();
+            clearPlayArea(); 
+
+            gameTimerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                // Incrementar velocidad de aparición de iconos
+                const timeProgress = (INITIAL_TIME - timeLeft) / INITIAL_TIME; // Progreso de 0 a 1
+                currentSpawnInterval = INITIAL_SPAWN_INTERVAL - (INITIAL_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * timeProgress;
+                currentSpawnInterval = Math.max(MIN_SPAWN_INTERVAL, currentSpawnInterval); // No bajar del mínimo
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            // Iniciar ciclo de aparición de iconos
+            scheduleNextIconSpawn();
+        }
+
+        function scheduleNextIconSpawn() {
+            if (timeLeft <= 0) return; // No spawnees si el juego terminó
+            clearTimeout(iconSpawnTimeout); // Limpiar timeout anterior por si acaso
+            iconSpawnTimeout = setTimeout(() => {
+                spawnIcon();
+                scheduleNextIconSpawn(); // Volver a programar el siguiente
+            }, currentSpawnInterval);
+        }
+
+
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = `Puntos: ${score}`;
+        }
+
+        function updateTimerDisplay() {
+            timerDisplay.textContent = `Tiempo: ${timeLeft}s`;
+        }
+
+        function clearPlayArea() {
+            playArea.innerHTML = ''; // No quita el popup, ya que no es hijo de playArea
+            activeIcons = [];
+        }
+
+        // --- Lógica de los Iconos ---
+        function spawnIcon() {
+            if (timeLeft <= 0) return; // Doble chequeo
+            
+            const iconElement = document.createElement('div');
+            iconElement.classList.add('icon');
+            
+            // Decidir si es una bomba (ej. 10% de probabilidad)
+            let iconType;
+            if (Math.random() < 0.10 && timeLeft < INITIAL_TIME - 5) { // Bombas empiezan a aparecer después de 5 seg
+                iconType = BOMB_ICON;
+            } else {
+                iconType = NON_BOMB_ICONS_TO_SPAWN[Math.floor(Math.random() * NON_BOMB_ICONS_TO_SPAWN.length)];
+            }
+            iconElement.textContent = iconType;
+            
+            const movementType = Math.random();
+
+            if (movementType < 0.6) { 
+                iconElement.style.left = Math.random() * (playArea.clientWidth - 40) + 'px';
+                iconElement.style.top = '-50px';
+                animateFall(iconElement);
+            } else if (movementType < 0.8) { 
+                iconElement.style.top = Math.random() * (playArea.clientHeight - 60) + 'px';
+                iconElement.style.left = '-50px'; 
+                animateHorizontal(iconElement, 'left-to-right');
+            } else { 
+                iconElement.style.top = Math.random() * (playArea.clientHeight - 60) + 'px';
+                iconElement.style.left = playArea.clientWidth + 'px'; 
+                animateHorizontal(iconElement, 'right-to-left');
+            }
+            
+            iconElement.addEventListener('click', handleIconClick);
+            iconElement.addEventListener('touchstart', handleIconClick, { passive: true });
+
+            playArea.appendChild(iconElement);
+            activeIcons.push(iconElement);
+        }
+        
+        function animateFall(iconElement) {
+            let fallSpeed = Math.random() * 3 + 2; 
+            function move() {
+                if (!document.body.contains(iconElement)) return;
+                let currentTop = parseFloat(iconElement.style.top);
+                iconElement.style.top = currentTop + fallSpeed + 'px';
+                if (currentTop < playArea.clientHeight) {
+                    requestAnimationFrame(move);
+                } else {
+                    removeIcon(iconElement);
+                }
+            }
+            requestAnimationFrame(move);
+        }
+
+        function animateHorizontal(iconElement, direction) {
+            let horizontalSpeed = Math.random() * 2.5 + 1.5; 
+            function move() {
+                if (!document.body.contains(iconElement)) return;
+                let currentLeft = parseFloat(iconElement.style.left);
+                if (direction === 'left-to-right') {
+                    iconElement.style.left = currentLeft + horizontalSpeed + 'px';
+                    if (currentLeft > playArea.clientWidth) {
+                        removeIcon(iconElement);
+                    } else {
+                        requestAnimationFrame(move);
+                    }
+                } else { 
+                    iconElement.style.left = currentLeft - horizontalSpeed + 'px';
+                    if (currentLeft < -50) { 
+                        removeIcon(iconElement);
+                    } else {
+                        requestAnimationFrame(move);
+                    }
+                }
+            }
+            requestAnimationFrame(move);
+        }
+
+        // --- Lógica de Click en Icono ---
+        function handleIconClick(event) {
+            if (timeLeft <= 0) return; // No procesar clicks si el juego terminó
+
+            event.preventDefault();
+            const clickedIcon = event.currentTarget;
+            const iconText = clickedIcon.textContent;
+            
+            if (iconText === TARGET_ICON) {
+                score++;
+                updateScoreDisplay();
+                // playSound('point');
+            } else if (iconText === BOMB_ICON) {
+                showBombEffect();
+                // Aquí podrías restar más puntos o alguna otra penalización si quieres
+                // score -= 5; // Ejemplo: penalización mayor
+                // updateScoreDisplay();
+                // playSound('bomb');
+            } else { // Icono incorrecto (no es 🍆 ni 💣)
+                score -= PENALTY_POINTS;
+                score = Math.max(0, score); // Evitar puntuación negativa
+                updateScoreDisplay();
+                // playSound('error');
+            }
+            
+            removeIcon(clickedIcon);
+        }
+
+        function showBombEffect() {
+            bombPopup.style.display = 'block';
+            setTimeout(() => {
+                bombPopup.style.display = 'none';
+            }, 700); // Mostrar por 0.7 segundos
+        }
+
+        /*
+        // Ejemplo de función de sonido (necesitarías archivos de audio)
+        const sounds = {
+            point: new Audio('sounds/point.wav'),
+            error: new Audio('sounds/error.wav'),
+            bomb: new Audio('sounds/bomb.wav')
+        };
+        function playSound(soundName) {
+            if (sounds[soundName]) {
+                sounds[soundName].currentTime = 0; // Para poder repetirlo rápido
+                sounds[soundName].play().catch(e => console.log("Error al reproducir sonido:", e));
+            }
+        }
+        */
+
+        function removeIcon(iconElement) {
+            if (iconElement && iconElement.parentNode) {
+                iconElement.parentNode.removeChild(iconElement);
+            }
+            activeIcons = activeIcons.filter(icon => icon !== iconElement);
+        }
+
+
+        // --- Lógica del Final del Juego ---
+        function endGame() {
+            clearInterval(gameTimerInterval);
+            clearTimeout(iconSpawnTimeout); // Detener el ciclo de aparición
+            
+            activeIcons.forEach(icon => {
+                if (icon && icon.parentNode) {
+                    icon.parentNode.removeChild(icon);
+                }
+            });
+            activeIcons = [];
+
+            finalScoreDisplay.textContent = `${playerName}, ¡conseguiste ${score} puntos!`;
+            localStorage.setItem(`bacheloretteGameScore_${playerName}`, score);
+            showScreen('end-screen');
+        }
+
+        // --- Botones de la Pantalla Final ---
+        restartButton.addEventListener('click', () => {
+            startInitialCountdown();
+        });
+
+        homeButton.addEventListener('click', () => {
+            showScreen('start-screen');
+        });
+
+        shareWhatsappButton.addEventListener('click', () => {
+            const message = `¡He conseguido ${score} puntos en el juego de despedida "Same 🍆 Forever" (desarrollado por Vicente R.)! ¿Puedes superarme?`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
+        copyScoreButton.addEventListener('click', () => {
+            const textToCopy = `¡${playerName} consiguió ${score} puntos en "Same 🍆 Forever" (desarrollado por Vicente R.)!`;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('¡Puntuación copiada al portapapeles!');
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+                alert('No se pudo copiar la puntuación. Intenta manualmente.');
+            });
+        });
+
+    </script>
+</body>
+</html>
