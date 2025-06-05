@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego Interactivo: Fundamentos de Administración</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px; /* Menos padding en body para móviles */
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 16px; /* Base font size */
+        }
+
+        .quiz-container {
+            background-color: #fff;
+            padding: 20px; /* Ajustar padding */
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 100%; /* Usar 100% y max-width */
+            max-width: 700px;
+            margin-bottom: 20px;
+            box-sizing: border-box; /* Incluir padding y border en el width */
+        }
+
+        .quiz-header h1 {
+            color: #007bff;
+            margin: 0 0 10px 0;
+            font-size: 1.8em; /* Ajustar tamaño */
+            text-align: center;
+        }
+
+        .quiz-header p {
+            font-size: 1em; /* Ajustar tamaño */
+            color: #555;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #question-area h2 {
+            font-size: 1.3em; /* Ajustar tamaño */
+            margin-bottom: 15px;
+            color: #333;
+        }
+        #question-area .chapter-title {
+            font-size: 1em; /* Ajustar tamaño */
+            font-weight: bold;
+            color: #0056b3;
+            margin-bottom: 5px;
+        }
+        #question-area .subtopic {
+            font-size: 0.85em; /* Ajustar tamaño */
+            font-style: italic;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .options button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            color: #333;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s, border-color 0.3s;
+            font-size: 1em; /* Asegurar que herede o tenga buen tamaño */
+            box-sizing: border-box;
+        }
+
+        .options button:hover:not(:disabled) {
+            background-color: #e9e9e9;
+            border-color: #007bff;
+        }
+        .options button:disabled {
+            opacity: 0.7; /* Hacer más visible que está deshabilitado */
+            cursor: not-allowed;
+        }
+        .options button.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .options button.incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        #feedback-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            font-size: 0.95em; /* Ajustar tamaño */
+        }
+        #feedback-area.correct-feedback {
+            background-color: #d1e7dd;
+            border: 1px solid #badbcc;
+            color: #0f5132;
+        }
+        #feedback-area.incorrect-feedback {
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+            color: #842029;
+        }
+
+        #socratic-prompt {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        #page-reference {
+            font-size: 0.9em;
+            margin-top: 10px;
+            color: #0056b3;
+        }
+
+        #navigation {
+            margin-top: 20px;
+            text-align: center;
+            display: flex; /* Para alinear botones horizontalmente si hay más de uno */
+            gap: 10px; /* Espacio entre botones */
+            justify-content: center; /* Centrar botones */
+            flex-wrap: wrap; /* Permitir que los botones pasen a la siguiente línea si no caben */
+        }
+
+        #navigation button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px; /* Ajustar padding */
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1em; /* Ajustar tamaño */
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 5px; /* Para cuando se envuelven */
+        }
+        #navigation button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        #navigation button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            height: 20px;
+            overflow: hidden; /* Para que el borde redondeado funcione bien con la barra interna */
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #007bff;
+            border-radius: 5px 0 0 5px; /* Redondear solo esquinas izquierdas si no está al 100% */
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            font-size: 0.8em;
+            transition: width 0.5s ease-in-out;
+        }
+        .progress-bar.full {
+             border-radius: 5px; /* Todas las esquinas redondeadas cuando está llena */
+        }
+
+        /* Media Queries para responsividad */
+        @media (max-width: 600px) {
+            .quiz-container {
+                padding: 15px;
+            }
+            .quiz-header h1 {
+                font-size: 1.5em;
+            }
+            #question-area h2 {
+                font-size: 1.15em;
+            }
+            .options button {
+                padding: 10px;
+                font-size: 0.95em;
+            }
+            #navigation {
+                flex-direction: column; /* Apilar botones en pantallas pequeñas */
+            }
+            #navigation button {
+                width: 100%; /* Hacer que los botones ocupen todo el ancho */
+                margin-bottom: 8px; /* Espacio si están apilados */
+                padding: 12px 15px; /* Hacerlos un poco más altos */
+            }
+            #navigation button:last-child {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1 id="main-title">Fundamentos de Administración de Empresas</h1>
+            <p>Un Juego Interactivo Socrático</p>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar-fill">0%</div>
+        </div>
+
+        <div id="question-area">
+            <p class="chapter-title" id="chapter-title-text"></p>
+            <p class="subtopic" id="subtopic-text"></p>
+            <h2 id="question-text"></h2>
+            <div class="options" id="options-container">
+                <!-- Los botones de opción se generarán aquí -->
+            </div>
+        </div>
+
+        <div id="feedback-area">
+            <p id="feedback-header"></p>
+            <p id="explanation-text"></p>
+            <p id="socratic-prompt"></p>
+            <p id="page-reference"></p>
+        </div>
+
+        <div id="navigation" class="navigation-controls">
+            <button id="next-btn" disabled>Siguiente Pregunta</button>
+            <!-- Botones de reintento se añadirán aquí dinámicamente -->
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            // --- CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA ---
+            // Subtema 1.1: Una nueva economía, una nueva forma de hacer empresa (Páginas 7-8)
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.1. Una nueva economía, una nueva forma de hacer empresa",
+                question: "Según Michael Porter, ¿cuáles son algunos de los factores tradicionales que caracterizan el funcionamiento o situación competitiva de un mercado? (p. 7)",
+                options: [
+                    { text: "La intensidad de la competencia, facilidad de acceso de nuevos competidores, poder de clientes y proveedores, y existencia de productos sustitutivos.", isCorrect: true },
+                    { text: "Únicamente la intensidad de la competencia y el poder de los clientes.", isCorrect: false },
+                    { text: "El nivel de intervención gubernamental y las tasas de interés bancarias.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Excelente! Porter identificó estas cinco fuerzas como determinantes clave de la competencia en un sector.",
+                socraticCorrect: "El texto afirma que, aunque estas fuerzas son estables, el 'contexto económico ha alterado completamente la forma de entender los negocios'. ¿Cómo un 'profundo cambio tecnológico' (p. 7) podría modificar la influencia de, por ejemplo, los 'productos sustitutivos'?",
+                explanationIncorrect: "Porter considera un conjunto más amplio de factores. La intervención gubernamental, aunque relevante para el entorno, no es una de las cinco fuerzas competitivas directas que él definió.",
+                socraticIncorrect: "Las Fuerzas Competitivas de Porter son un modelo fundamental. ¿Qué te llevó a pensar que se limitaba a menos factores o incluía otros diferentes?",
+                page: 7
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.1. Una nueva economía, una nueva forma de hacer empresa",
+                question: "El texto menciona que 'el ritmo es frenético, la palabra estático se ha borrado de los diccionarios empresariales' (p. 8). ¿A qué se refiere esta afirmación en el contexto de la nueva economía?",
+                options: [
+                    { text: "A la necesidad de una adaptación y cambio constante por parte de las empresas debido a la rápida evolución del entorno.", isCorrect: true },
+                    { text: "A que las empresas ahora prefieren no planificar a largo plazo.", isCorrect: false },
+                    { text: "A que las estructuras organizativas de las empresas se han vuelto completamente rígidas.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Esta metáfora subraya la dinámica acelerada del entorno actual, donde la capacidad de adaptación rápida es crucial para la supervivencia y el éxito.",
+                socraticCorrect: "Si 'los límites de los sectores no son claros, ni conceptual ni geográficamente' (p. 8), ¿qué desafíos y oportunidades presenta esta indefinición para una empresa que busca identificar a sus competidores y su mercado objetivo?",
+                explanationIncorrect: "Aunque la planificación puede ser más flexible, no se elimina. La rigidez sería contraproducente en un entorno dinámico. La frase apunta a la velocidad del cambio.",
+                socraticIncorrect: "La expresión 'ritmo frenético' sugiere un cambio constante. ¿Cómo interpretaste que la palabra 'estático' se haya 'borrado' en este nuevo contexto empresarial?",
+                page: 8
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.1. Una nueva economía, una nueva forma de hacer empresa",
+                question: "¿Cuál de los siguientes es uno de los 'hechos que definen un nuevo entorno económico' mencionado en la página 7, además del cambio tecnológico?",
+                options: [
+                    { text: "La liberalización de los movimientos de capitales.", isCorrect: true },
+                    { text: "Un encarecimiento significativo de los costes de transporte a nivel global.", isCorrect: false },
+                    { text: "Una mayor fragmentación de los valores globales y pautas de consumo.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! La liberalización de capitales, que facilita su movimiento internacional, es uno de los pilares de la globalización y del nuevo entorno económico descrito.",
+                socraticCorrect: "El texto menciona 'la supresión de las barreras a los movimientos internacionales de capitales' (p. 8). ¿Cómo crees que esto puede, por un lado, facilitar la financiación de las empresas y, por otro, aumentar la volatilidad o el riesgo financiero global?",
+                explanationIncorrect: "El texto menciona un 'abaratamiento' de los costes de transporte y una 'homogeneización' de ciertas pautas, no su fragmentación, como definitorios del nuevo entorno.",
+                socraticIncorrect: "La página 7 enumera varios factores clave. ¿Recordabas el impacto del transporte o de los valores globales de manera diferente a como lo expone el texto?",
+                page: "7-8"
+            },
+            // Subtema 1.2: La empresa como ente socioeconómico (Páginas 8-10)
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.2. La empresa como ente socioeconómico",
+                question: "Al comparar la empresa con la familia, el texto (p. 8) define a la empresa como 'unidad económica de producción'. ¿Cómo define a la familia en este contexto?",
+                options: [
+                    { text: "Unidad económica de consumo.", isCorrect: true },
+                    { text: "Unidad económica de inversión.", isCorrect: false },
+                    { text: "Unidad socioeconómica de ahorro.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Tradicionalmente, en economía, la empresa se ve como la unidad que produce bienes/servicios y la familia como la unidad que los consume.",
+                socraticCorrect: "Si bien esta es una distinción clásica, ¿en qué medida crees que la línea entre 'producción' y 'consumo' se ha difuminado con la aparición de la 'prosumición' (consumidores que también producen, p. ej., contenido en redes sociales) y cómo podría afectar esto a la forma en que las empresas entienden a sus 'clientes'?",
+                explanationIncorrect: "La distinción clásica es entre producción (empresa) y consumo (familia) como roles económicos primarios.",
+                socraticIncorrect: "La página 8 establece una analogía económica. ¿Qué te hizo pensar en un rol diferente para la familia en este esquema?",
+                page: 8
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.2. La empresa como ente socioeconómico",
+                question: "Una de las funciones socioeconómicas de la empresa listadas en la página 9 es 'Asumir riesgos implícitos en la actividad económica'. ¿A qué tipo de riesgo se refiere principalmente?",
+                options: [
+                    { text: "El riesgo de anticipar el producto en la generación de rentas monetarias, es decir, invertir antes de saber si habrá beneficios.", isCorrect: true },
+                    { text: "El riesgo de desastres naturales que afecten sus instalaciones.", isCorrect: false },
+                    { text: "El riesgo de fluctuaciones en los tipos de cambio de moneda extranjera.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Esta función se refiere al riesgo inherente a la actividad empresarial de invertir recursos (humanos, financieros, materiales) para producir bienes o servicios *antes* de tener la certeza de que se venderán y generarán beneficios.",
+                socraticCorrect: "Si la empresa asume el riesgo de 'anticipar el producto', ¿cómo influye la calidad de la 'información de mercados' (vista en el Cap. 2) en la capacidad de la empresa para gestionar y mitigar este riesgo fundamental?",
+                explanationIncorrect: "Aunque los desastres naturales y los tipos de cambio son riesgos, la función mencionada se centra en el riesgo intrínseco de la inversión productiva frente a la incertidumbre de los ingresos futuros.",
+                socraticIncorrect: "La página 9 detalla varias funciones. ¿Qué te llevó a interpretar el 'riesgo implícito' de una manera diferente a la inversión anticipada?",
+                page: 9
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.2. La empresa como ente socioeconómico",
+                question: "La teoría neoclásica de la empresa asume un modelo de competencia perfecta. ¿Cuál de estas NO es una condición para la competencia perfecta según la página 9?",
+                options: [
+                    { text: "Productos o servicios altamente diferenciados y personalizados.", isCorrect: true },
+                    { text: "Existencia de perfecta información, completa y veraz.", isCorrect: false },
+                    { text: "Libre concurrencia de entrada y salida sin barreras.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! En competencia perfecta, se asume que los productos o servicios son 'identificados, es decir, uniformes y homogéneos', no diferenciados. La diferenciación es más característica de la competencia monopolística o el oligopolio.",
+                socraticCorrect: "El texto señala que, en competencia perfecta, el precio que obtiene la empresa es 'suficiente para compensar los “inputs” invertidos, sin la obtención de beneficios anormales o extraordinarios' (p. 10). ¿Por qué la 'libre concurrencia de entrada' asegura este resultado a largo plazo?",
+                explanationIncorrect: "La información perfecta y la libre concurrencia son pilares de la competencia perfecta. La homogeneidad del producto también lo es.",
+                socraticIncorrect: "La página 9 lista cinco condiciones. ¿Cuál de ellas te pareció menos intuitiva como parte de un mercado 'perfectamente' competitivo?",
+                page: 9
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.2. La empresa como ente socioeconómico",
+                question: "Al considerar las funciones de la empresa como 'unidad de decisión' (p. 10), ¿qué implica la actividad que conlleva 'un riesgo, aparte de consideraciones técnicas, sociales y morales'?",
+                options: [
+                    { text: "La formulación de objetivos y la programación de acciones para alcanzarlos, asumiendo la incertidumbre del resultado.", isCorrect: true },
+                    { text: "La selección de proveedores con los precios más bajos.", isCorrect: false },
+                    { text: "La contratación de personal cualificado para las tareas productivas.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Como unidad de decisión, la empresa establece metas y planifica acciones, pero siempre existe el riesgo de que esas decisiones no conduzcan a los resultados esperados debido a la incertidumbre inherente al entorno y al mercado.",
+                socraticCorrect: "Si la toma de decisiones implica 'consideraciones técnicas, sociales y morales', además del riesgo económico, ¿cómo crees que una empresa podría equilibrar, por ejemplo, un objetivo de reducción de costes (técnico/económico) con una consideración social como el impacto en el empleo local?",
+                explanationIncorrect: "Aunque la selección de proveedores o la contratación son decisiones, el 'riesgo' fundamental aquí se refiere a la incertidumbre de alcanzar los objetivos globales a través de las decisiones estratégicas y operativas.",
+                socraticIncorrect: "La página 10 describe las funciones de la empresa desde diferentes perspectivas. ¿Qué aspecto de la 'unidad de decisión' te llevó a otra interpretación del riesgo mencionado?",
+                page: 10
+            },
+            // Subtema 1.3: Teorías de la empresa (Páginas 11-13)
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.3. Teorías de la empresa",
+                question: "La teoría neoclásica de la empresa (p. 11) parte de la asunción de un comportamiento humano caracterizado por:",
+                options: [
+                    { text: "Racionalidad absoluta y comportamiento egoísta (maximización de opciones).", isCorrect: true },
+                    { text: "Racionalidad limitada y altruismo.", isCorrect: false },
+                    { text: "Comportamiento emocional y búsqueda de la satisfacción mínima.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La teoría neoclásica se basa en el 'homo economicus', un agente perfectamente racional que busca maximizar su utilidad o beneficio de manera egoísta, con información perfecta.",
+                socraticCorrect: "El texto critica estos supuestos por ser 'poco realistas' (p. 12). ¿En qué situaciones cotidianas o empresariales crees que la 'racionalidad absoluta' es un supuesto que claramente no se cumple?",
+                explanationIncorrect: "La racionalidad limitada es un concepto de teorías posteriores (como la del comportamiento administrativo). El altruismo o la satisfacción mínima no son los supuestos centrales neoclásicos.",
+                socraticIncorrect: "La página 11 describe los fundamentos de la teoría neoclásica. ¿Qué parte de la descripción del comportamiento humano te resultó menos clara?",
+                page: 11
+            },
+             {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.3. Teorías de la empresa",
+                question: "La Teoría de los Costes de Transacción (TCT) (p. 12) argumenta que la elección entre usar el mercado o la organización interna (empresa) para una actividad depende de:",
+                options: [
+                    { text: "La minimización de los 'costes de transacción' (costes de utilizar el mecanismo de precios).", isCorrect: true },
+                    { text: "Los costes de producción y comercialización únicamente.", isCorrect: false },
+                    { text: "La maximización del número de empleados de la empresa.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! La TCT se centra en que, además de los costes de producción, existen costes asociados a usar el mercado (buscar información, negociar contratos, asegurar cumplimiento), y la empresa surge como una forma de reducir estos costes de transacción en ciertas circunstancias.",
+                socraticCorrect: "La TCT menciona 'comportamientos oportunistas' como un fallo del mercado (p. 12). ¿Cómo puede la estructura jerárquica y las relaciones a largo plazo dentro de una empresa ayudar a mitigar el oportunismo que podría surgir en transacciones de mercado puntuales y anónimas?",
+                explanationIncorrect: "Si bien los costes de producción son importantes, la TCT introduce específicamente la idea de los costes de *usar el mercado* como factor determinante.",
+                socraticIncorrect: "La página 12 explica la lógica de la TCT. ¿Qué te llevó a pensar que la decisión se basaba en otros criterios distintos a la minimización de los costes de transacción?",
+                page: 12
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.3. Teorías de la empresa",
+                question: "La Teoría de la Agencia (p. 13) se enfoca en el estudio de las relaciones contractuales donde una persona (el principal) emplea a otra (el agente) para realizar una actividad en su nombre. Un 'problema de la agencia' surge cuando:",
+                options: [
+                    { text: "El principal y el agente tienen objetivos diferentes y/o asimetrías de información.", isCorrect: true },
+                    { text: "El principal y el agente tienen exactamente los mismos objetivos y acceso a la información.", isCorrect: false },
+                    { text: "El agente siempre actúa en el mejor interés del principal sin necesidad de supervisión.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Exacto! El 'problema de la agencia' se da cuando los intereses del agente (ej. directivo) pueden no estar perfectamente alineados con los del principal (ej. accionista), y el principal no puede observar perfectamente las acciones del agente (asimetría de información).",
+                socraticCorrect: "Si los directivos (agentes) pueden tener objetivos diferentes a los accionistas (principales), como el crecimiento de la empresa por prestigio personal en lugar de la maximización del valor para el accionista, ¿qué mecanismos de 'control' o 'incentivos' se te ocurren que podrían alinear mejor estos intereses?",
+                explanationIncorrect: "Si los objetivos e información fueran idénticos, o si el agente siempre actuara en interés del principal, no habría 'problema de agencia' en el sentido que lo define la teoría.",
+                socraticIncorrect: "La página 13 describe los problemas centrales de la teoría de la agencia. ¿Qué te resultó confuso sobre la naturaleza del 'problema de la agencia'?",
+                page: 13
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.3. Teorías de la empresa",
+                question: "El enfoque del comportamiento administrativo (Simon, March, Cyert) (p. 13-14) contrasta con la teoría neoclásica al proponer un modelo de:",
+                options: [
+                    { text: "Racionalidad limitada, donde se buscan soluciones satisfactorias en lugar de óptimas.", isCorrect: true },
+                    { text: "Racionalidad absoluta y optimización en la toma de decisiones.", isCorrect: false },
+                    { text: "Decisiones basadas puramente en la intuición y la emoción, sin análisis.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Herbert Simon introdujo el concepto de 'racionalidad limitada', reconociendo que los humanos tienen limitaciones cognitivas y de información, por lo que buscan soluciones 'suficientemente buenas' (satisfactorias) en lugar de la solución óptima perfecta que asume la teoría neoclásica.",
+                socraticCorrect: "Si los decisores en una empresa operan con 'racionalidad limitada' y buscan soluciones 'satisfactorias', ¿cómo crees que esto afecta la forma en que se establecen los objetivos y se evalúan las alternativas estratégicas en la práctica, en comparación con un ideal de optimización perfecta?",
+                explanationIncorrect: "La racionalidad absoluta es neoclásica. Las decisiones puramente emocionales sin análisis tampoco representan el enfoque administrativo, que sí considera procesos de resolución de problemas.",
+                socraticIncorrect: "Las páginas 13-14 contraponen el 'hombre racional neoclásico' con el 'hombre administrativo'. ¿Qué aspecto de la 'racionalidad limitada' te resultó menos claro?",
+                page: "13-14"
+            },
+            // Subtema 1.4: Concepto de organización (Página 14)
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.4. Concepto de organización",
+                question: "Según Gibson (1996), citado en la página 14, ¿cuáles son los dos conceptos fundamentales que matizan la definición de una organización como 'una unidad coordinada formada por un mínimo de dos personas que trabajan para alcanzar un objetivo u objetivos comunes'?",
+                options: [
+                    { text: "Una estructura deliberada y unos objetivos comunes.", isCorrect: true },
+                    { text: "La búsqueda de beneficio y la jerarquía estricta.", isCorrect: false },
+                    { text: "La espontaneidad en las relaciones y la ausencia de liderazgo formal.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Para Gibson, no es solo un grupo de personas, sino que es esencial que exista una 'estructura deliberada' (una forma intencionada de organizarse) y que compartan 'objetivos comunes' que den sentido a su unión.",
+                socraticCorrect: "Si una 'estructura deliberada' es clave, ¿cómo se diferencia una 'organización' (como un club deportivo o un ayuntamiento) de un grupo de amigos que se reúne casualmente sin una estructura ni objetivos formalizados?",
+                explanationIncorrect: "El beneficio no es un requisito para todas las organizaciones (p. ej. una ONG), y la jerarquía es una forma de estructura, pero no el único elemento. La espontaneidad y ausencia de liderazgo no definen una organización formal.",
+                socraticIncorrect: "La página 14 es muy clara sobre los dos conceptos que matiza Gibson. ¿Qué te llevó a pensar en otros elementos como definitorios?",
+                page: 14
+            },
+            // Subtema 1.5: Concepto de empresa (Página 15)
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.5. Concepto de empresa",
+                question: "Una visión actualizada del concepto de empresa (p. 15) la define como una organización que transforma recursos físicos, monetarios y cognitivos en bienes y/o servicios con el objeto principal de obtener beneficios. ¿Qué elemento adicional de la definición de 'organización' recoge esta concepción de empresa?",
+                options: [
+                    { text: "El hecho de que en ella participan personas, bajo cierta estructura, para conseguir objetivos.", isCorrect: true },
+                    { text: "La ausencia de una estructura formal.", isCorrect: false },
+                    { text: "La garantía de que el beneficio obtenido siempre será el máximo posible y sin límites.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Al definir la empresa como una 'organización', se incorpora la idea de que está compuesta por personas que interactúan dentro de una estructura para lograr objetivos, siendo el beneficio el principal, pero no necesariamente el único o ilimitado.",
+                socraticCorrect: "Si la empresa, como organización, implica 'personas bajo cierta estructura', ¿cómo influye la calidad de esa 'estructura' y la gestión de esas 'personas' en la capacidad de la empresa para 'transformar un conjunto de recursos' eficientemente y alcanzar su objetivo de beneficio?",
+                explanationIncorrect: "Toda organización, incluida la empresa, tiene alguna estructura. El beneficio máximo sin límites es una visión clásica que el texto matiza.",
+                socraticIncorrect: "La página 15 relaciona el concepto de empresa con el de organización. ¿Qué aspecto de esta conexión te resultó menos evidente?",
+                page: 15
+            },
+            // Subtema 1.6: Tipos de empresa (Páginas 16-18)
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.6. Tipos de empresa",
+                question: "En una 'sociedad colectiva' (p. 17), ¿cómo es la responsabilidad de los socios frente a las deudas de la empresa?",
+                options: [
+                    { text: "Ilimitada y solidaria, respondiendo incluso con su patrimonio personal.", isCorrect: true },
+                    { text: "Limitada al capital aportado por cada socio.", isCorrect: false },
+                    { text: "No tienen ninguna responsabilidad, ya que esta recae en un gerente externo.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! En la sociedad colectiva, los socios responden personal, ilimitada y solidariamente por las deudas sociales. Esto significa que los acreedores pueden ir contra el patrimonio personal de cualquiera de los socios.",
+                socraticCorrect: "Dada la 'responsabilidad ilimitada y solidaria', ¿por qué crees que el texto destaca que 'la solidaridad y confianza entre los socios es fundamental' en este tipo de sociedad (p. 17)?",
+                explanationIncorrect: "La responsabilidad limitada es característica de otras formas societarias (S.L., S.A.). Los socios sí tienen responsabilidad.",
+                socraticIncorrect: "La página 17 describe los diferentes tipos de sociedades mercantiles. ¿Qué te confundió sobre la responsabilidad en la sociedad colectiva?",
+                page: 17
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.6. Tipos de empresa",
+                question: "Una 'sociedad comanditaria' (p. 17) se caracteriza por tener dos tipos de socios. ¿Cuáles son y cómo se diferencia su responsabilidad?",
+                options: [
+                    { text: "Socios colectivos (responsabilidad ilimitada y solidaria) y socios comanditarios (responsabilidad limitada a su aportación de capital).", isCorrect: true },
+                    { text: "Socios industriales (aportan trabajo, responsabilidad ilimitada) y socios capitalistas (aportan capital, responsabilidad ilimitada).", isCorrect: false },
+                    { text: "Socios gestores (responsabilidad limitada) y socios inversores (responsabilidad ilimitada).", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! La sociedad comanditaria combina socios colectivos (que gestionan y tienen responsabilidad ilimitada) con socios comanditarios (que solo aportan capital y su responsabilidad se limita a dicha aportación).",
+                socraticCorrect: "Si los socios comanditarios tienen responsabilidad limitada y generalmente no participan en la gestión, ¿qué atractivo podría tener este tipo de sociedad para un inversor que quiere participar en un negocio pero sin asumir los riesgos de la gestión ni una responsabilidad total?",
+                explanationIncorrect: "La distinción clave está entre la responsabilidad ilimitada de los colectivos (que suelen gestionar) y la limitada de los comanditarios (que aportan capital).",
+                socraticIncorrect: "La página 17 describe la sociedad comanditaria. ¿Qué te resultó confuso sobre los tipos de socios o sus responsabilidades?",
+                page: 17
+            },
+             {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.6. Tipos de empresa",
+                question: "La 'sociedad nueva empresa' es una especialidad de la sociedad de responsabilidad limitada (p. 17). ¿Cuál es una de sus ventajas destacadas?",
+                options: [
+                    { text: "La posibilidad de constituirse de forma telemática y estar operativa en 48 horas.", isCorrect: true },
+                    { text: "Un capital social mínimo mucho más elevado que la S.L. normal.", isCorrect: false },
+                    { text: "La obligación de tener un objeto social muy específico y restringido.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! La 'sociedad nueva empresa' se diseñó para agilizar la creación de empresas, permitiendo trámites telemáticos rápidos y ofreciendo un objeto social genérico para mayor flexibilidad inicial.",
+                socraticCorrect: "Si una de las ventajas es que 'el objeto social es genérico, lo que permite una mayor flexibilidad' (p. 17), ¿cómo beneficia esto a un emprendedor que está iniciando un negocio y quizás aún no tiene completamente definidos todos los servicios o productos que ofrecerá en el futuro?",
+                explanationIncorrect: "El capital mínimo es el mismo que la S.L. (3000 euros en el momento del texto). Su objeto social es genérico, no restringido.",
+                socraticIncorrect: "La página 17 lista las ventajas de la 'sociedad nueva empresa'. ¿Cuál de ellas te pareció menos evidente o la confundiste con una característica diferente?",
+                page: 17
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.6. Tipos de empresa",
+                question: "Según la visión de Edward Freeman sobre la responsabilidad de la empresa (p. 16), las empresas deben buscar satisfacer no solo a los propietarios, sino también al resto de sus:",
+                options: [
+                    { text: "Stakeholders (grupos de interés).", isCorrect: true },
+                    { text: "Competidores directos.", isCorrect: false },
+                    { text: "Únicamente a los organismos reguladores gubernamentales.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La teoría de los stakeholders de Freeman amplía la responsabilidad de la empresa más allá de los accionistas (propietarios) para incluir a todos aquellos grupos que pueden afectar o son afectados por las actividades de la empresa (empleados, clientes, proveedores, comunidad, etc.).",
+                socraticCorrect: "Si una empresa adopta un enfoque de stakeholders, ¿cómo podría esto influir en sus decisiones sobre, por ejemplo, invertir en formación para sus empleados o en reducir su impacto ambiental, incluso si estas acciones no maximizan el beneficio a corto plazo para los accionistas?",
+                explanationIncorrect: "Aunque se interactúa con competidores y reguladores, el concepto de stakeholders es más amplio e incluye a todos los grupos de interés.",
+                socraticIncorrect: "La página 16 presenta la visión de Freeman. ¿Con qué otro grupo confundiste el concepto de 'stakeholders'?",
+                page: 16
+            },
+            // Subtema 1.7: Los subsistemas funcionales de la empresa (Páginas 19-20)
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.7. Los subsistemas funcionales de la empresa",
+                question: "El 'subsistema de aprovisionamiento' (p. 19) se encarga de:",
+                options: [
+                    { text: "Adquirir los insumos o factores necesarios para las actividades de producción.", isCorrect: true },
+                    { text: "La transformación de inputs en productos o servicios.", isCorrect: false },
+                    { text: "La administración de los recursos humanos de la empresa.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! El subsistema de aprovisionamiento es responsable de la gestión de compras, inventarios de materias primas y todo lo relacionado con asegurar que la empresa disponga de los recursos materiales necesarios para su operación.",
+                socraticCorrect: "Si el subsistema de aprovisionamiento también se ocupa de la 'gestión de las inversiones de naturaleza física que se van a incorporar al proceso de producción' (p. 19), ¿cómo se relaciona esto con la selección de maquinaria o equipos para una fábrica?",
+                explanationIncorrect: "La transformación es del subsistema de producción. La administración de RRHH es del subsistema de recursos humanos.",
+                socraticIncorrect: "La página 19 define cada subsistema. ¿Qué te llevó a pensar que el aprovisionamiento tenía otra función principal?",
+                page: 19
+            },
+            {
+                chapter: "CAPÍTULO 1: ORGANIZACIÓN DE LA EMPRESA DESDE UNA VERTIENTE SOCIOECONÓMICA",
+                subtopic: "1.7. Los subsistemas funcionales de la empresa",
+                question: "El 'subsistema de dirección o administrativo o de management' (p. 20) tiene entre sus funciones:",
+                options: [
+                    { text: "La planificación y control de los subsistemas funcionales, velando por su coordinación y el logro de los objetivos de la empresa.", isCorrect: true },
+                    { text: "Determinar la cuantía de los fondos necesarios para la organización.", isCorrect: false },
+                    { text: "La selección y reclutamiento de los candidatos para los puestos de trabajo.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Este subsistema es el 'cerebro' de la organización, encargado de la planificación estratégica, la coordinación general, el control y la relación con el entorno para asegurar que todos los demás subsistemas trabajen juntos hacia los objetivos comunes.",
+                socraticCorrect: "Si el subsistema de dirección se encarga de desarrollar una 'adecuada planificación estratégica que logre proporcionar a la empresa una ventaja competitiva sostenible y a largo plazo' (p. 20), ¿cómo se conecta esta función con el análisis del entorno y de la industria que vimos en el Capítulo 2?",
+                explanationIncorrect: "La determinación de fondos es del subsistema financiero. La selección de personal es del de recursos humanos.",
+                socraticIncorrect: "La página 20 describe el rol del subsistema de dirección. ¿Con qué otra función o subsistema lo confundiste?",
+                page: 20
+            },
+            // --- CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO ---
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.1. Análisis del mercado",
+                question: "Según la página 21, ¿por qué es crucial analizar el mercado en un entorno competitivo y globalizado?",
+                options: [
+                    { text: "Para entender tanto a los competidores como las necesidades de los clientes, con el fin de desarrollar ventajas competitivas.", isCorrect: true },
+                    { text: "Para identificar formas de eliminar a todos los competidores y crear un monopolio.", isCorrect: false },
+                    { text: "Únicamente para copiar las estrategias de las empresas líderes del sector.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Exacto! El análisis de mercado busca comprender las dinámicas competitivas y las demandas de los clientes para que la empresa pueda diferenciarse y ofrecer un valor superior (ventaja competitiva).",
+                socraticCorrect: "El texto afirma que 'para que una organización obtenga una ventaja competitiva, deberá estar muy atenta de su entorno' (p. 21). Si una empresa se enfoca solo en sus clientes actuales y no en las tendencias emergentes del entorno, ¿qué riesgos podría enfrentar a mediano plazo?",
+                explanationIncorrect: "El objetivo no es eliminar la competencia de forma predatoria, ni simplemente copiar, sino entender para competir eficazmente y satisfacer al cliente.",
+                socraticIncorrect: "La página 21 introduce la necesidad del análisis de mercado. ¿Qué te llevó a pensar en un objetivo diferente al desarrollo de ventajas competitivas basadas en el entendimiento del entorno?",
+                page: 21
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.1.1. El sistema de información de mercados",
+                question: "Un Sistema de Información de Mercados (SIM) eficaz, según la página 22, debe ser capaz de realizar ¿cuáles de las siguientes funciones con la información?",
+                options: [
+                    { text: "Obtener, clasificar, analizar, evaluar y distribuir información oportuna y precisa para la toma de decisiones de marketing.", isCorrect: true },
+                    { text: "Solo almacenar grandes volúmenes de datos sin procesar.", isCorrect: false },
+                    { text: "Únicamente distribuir información ya procesada por fuentes externas.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Un SIM no es solo un repositorio de datos, sino un sistema completo que transforma datos brutos en información útil y la entrega a quienes toman decisiones de marketing.",
+                socraticCorrect: "El texto menciona que el SIM utiliza 'métodos y técnicas estadísticas' (p. 22). ¿Cómo crees que estas herramientas ayudan a transformar simples 'datos' en 'información relevante' para un directivo de marketing?",
+                explanationIncorrect: "Un SIM es mucho más que almacenar datos o distribuir información externa; implica un proceso completo desde la obtención hasta la distribución de información procesada y relevante.",
+                socraticIncorrect: "La página 22 define las capacidades de un SIM. ¿Qué parte de la definición te resultó menos clara o qué función consideraste más preponderante erróneamente?",
+                page: 22
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.1.1. El sistema de información de mercados",
+                question: "El 'marketing de bases de datos' y los 'sistemas CRM' (p. 22) son ejemplos de aplicaciones que surgen del uso avanzado de los Sistemas de Información de Mercados. ¿Cuál es uno de sus objetivos principales?",
+                options: [
+                    { text: "Identificar segmentos de mercado objetivo y diseñar estrategias de marketing directo personalizadas.", isCorrect: true },
+                    { text: "Reducir al mínimo la interacción personal con los clientes.", isCorrect: false },
+                    { text: "Vender las bases de datos de clientes a otras empresas no relacionadas.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Estas herramientas permiten un conocimiento más profundo de los clientes, lo que facilita la segmentación precisa y la creación de ofertas y comunicaciones de marketing mucho más personalizadas y efectivas.",
+                socraticCorrect: "Si un sistema CRM permite 'la identificación de segmentos de mercado objetivo', ¿cómo podría una empresa utilizar esta información para optimizar su inversión en publicidad en lugar de hacer campañas masivas e indiferenciadas?",
+                explanationIncorrect: "Aunque la automatización puede cambiar la interacción, el objetivo es mejorar la relación con el cliente. Vender datos sin consentimiento plantea problemas éticos y legales.",
+                socraticIncorrect: "La página 22 explica la utilidad del marketing de bases de datos y CRM. ¿Qué te llevó a pensar en un objetivo diferente para estas herramientas?",
+                page: 22
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.1.2. Definición y aplicación de la investigación comercial",
+                question: "Según Santesmases (2008), la investigación comercial se define como 'la búsqueda y análisis sistemático y objetivo de la información relevante para...' (p. 22)",
+                options: [
+                    { text: "...identificar y solucionar problemas de marketing.", isCorrect: true },
+                    { text: "...reducir los costes de producción de la empresa.", isCorrect: false },
+                    { text: "...elaborar los estados financieros anuales de la compañía.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! La investigación comercial está intrínsecamente ligada al marketing, proporcionando la información necesaria para tomar mejores decisiones en esta área y resolver los desafíos que se presenten.",
+                socraticCorrect: "Si la investigación comercial debe ser 'sistemática y objetiva', ¿qué implicaciones tiene esto para la forma en que se diseñan los estudios, se recogen los datos y se interpretan los resultados, para evitar sesgos?",
+                explanationIncorrect: "Aunque la información de marketing podría influir indirectamente en costes o finanzas, el propósito directo de la investigación comercial es abordar problemas de marketing.",
+                socraticIncorrect: "La definición de Santesmases (p. 22) es clave. ¿Qué te hizo asociar la investigación comercial con un objetivo diferente al marketing?",
+                page: 22
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.1.2. Definición y aplicación de la investigación comercial",
+                question: "Una empresa quiere lanzar un nuevo sabor de refresco y desea saber cómo reaccionarían los consumidores antes de una producción a gran escala. ¿Qué aplicación específica de la investigación comercial sería más adecuada según la página 23?",
+                options: [
+                    { text: "Test del producto.", isCorrect: true },
+                    { text: "Análisis de planes estratégicos de la competencia.", isCorrect: false },
+                    { text: "Estudio de la elasticidad de la demanda/precio del sector.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Un 'Test del producto' permitiría a la empresa obtener feedback directo de los consumidores sobre el nuevo sabor, ayudando a predecir su aceptación y a realizar ajustes si fuera necesario.",
+                socraticCorrect: "El 'Test del producto' es una investigación sobre el producto (p. 23). ¿En qué se diferenciaría de un 'Test de concepto', que también se menciona en la misma categoría?",
+                explanationIncorrect: "Analizar planes de la competencia o la elasticidad del precio son investigaciones válidas, pero el 'Test del producto' se enfoca directamente en la respuesta del consumidor a una oferta tangible.",
+                socraticIncorrect: "La página 23 lista ejemplos de aplicación. ¿Qué te llevó a considerar otra opción como la más adecuada para evaluar un nuevo sabor?",
+                page: 23
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.1.2. Definición y aplicación de la investigación comercial",
+                question: "Una de las fases del proceso de investigación comercial (p. 24) es el 'Diseño de la investigación'. ¿Qué tipo de actividad se realiza típicamente en esta fase?",
+                options: [
+                    { text: "Especificación de las hipótesis y determinación de variables.", isCorrect: true },
+                    { text: "Recogida masiva de datos de todas las fuentes posibles.", isCorrect: false },
+                    { text: "Interpretación de los resultados y emisión de conclusiones.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! En la fase de diseño, se planifica cómo se llevará a cabo el estudio, lo que incluye formular hipótesis claras sobre lo que se espera encontrar y definir las variables que se medirán para probar esas hipótesis.",
+                socraticCorrect: "Si una hipótesis no está bien definida o las variables no son las adecuadas, ¿cómo podría esto afectar la validez y utilidad de toda la investigación comercial, incluso si las fases posteriores (recogida, análisis) se realizan correctamente?",
+                explanationIncorrect: "La recogida de datos y la interpretación de resultados son fases posteriores. El diseño se centra en la planificación previa del estudio.",
+                socraticIncorrect: "La página 24 detalla las fases. ¿En qué orden recordabas o entendías las actividades del proceso de investigación comercial?",
+                page: 24
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.2. Análisis del entorno de la empresa",
+                question: "El análisis del entorno general de la empresa (a menudo utilizando un marco como PESTEL) considera diversas dimensiones. ¿A qué se refiere la dimensión 'Ecológica' (p. 25, implícito en la estructura PESTEL y p. 27)?",
+                options: [
+                    { text: "A las actuaciones gubernamentales y la legislación para salvaguardar el medio ambiente y promover el desarrollo sostenible.", isCorrect: true },
+                    { text: "Al estudio de la competencia directa en el sector.", isCorrect: false },
+                    { text: "A la estructura social, valores y creencias de la población.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La dimensión ecológica se centra en cómo las preocupaciones medioambientales, la legislación relacionada y la búsqueda de sostenibilidad afectan a las empresas y generan tanto riesgos como oportunidades.",
+                socraticCorrect: "El texto (p. 27) menciona que el marco normativo medioambiental puede 'generar nuevas oportunidades de negocio como poner en peligro otras existentes'. ¿Podrías dar un ejemplo de una oportunidad y un peligro que surjan de una legislación medioambiental más estricta?",
+                explanationIncorrect: "La competencia directa es parte del entorno específico (sectorial). La estructura social corresponde a la dimensión sociocultural.",
+                socraticIncorrect: "Las dimensiones del análisis PESTEL (Política, Económica, Sociocultural, Tecnológica, Ecológica, Legal) cubren diferentes aspectos del entorno general. ¿Con qué otra dimensión confundiste la ecológica?",
+                page: "25, 27"
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.2. Análisis del entorno de la empresa",
+                question: "Dentro del 'Entorno político' (p. 25), ¿cuál de estos factores es relevante para una empresa?",
+                options: [
+                    { text: "La estabilidad del gobierno y las actuaciones que implementen las administraciones públicas.", isCorrect: true },
+                    { text: "La tasa de crecimiento del Producto Interior Bruto (PIB).", isCorrect: false },
+                    { text: "Las tendencias demográficas de la población.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Un entorno político estable y predecible, junto con políticas gubernamentales claras, proporciona un marco de seguridad y afecta las condiciones en las que operan las empresas.",
+                socraticCorrect: "Si un gobierno implementa 'actuaciones encaminadas a mejorar el bienestar de la sociedad' (p. 26), como un aumento del salario mínimo, ¿cómo podría esto representar tanto una oportunidad como una amenaza para diferentes tipos de empresas?",
+                explanationIncorrect: "El crecimiento del PIB es del entorno económico y las tendencias demográficas del sociocultural. El entorno político se centra en la gobernanza y las políticas públicas.",
+                socraticIncorrect: "La página 25 describe el entorno político. ¿Qué te llevó a pensar que un factor económico o sociocultural era primordialmente político?",
+                page: "25-26"
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.2. Análisis del entorno de la empresa",
+                question: "El 'Entorno económico' (p. 26) incluye indicadores como la inflación. ¿Qué es la inflación?",
+                options: [
+                    { text: "El aumento generalizado y sostenido de los precios de bienes y servicios en un período.", isCorrect: true },
+                    { text: "La disminución generalizada y sostenida de los precios.", isCorrect: false },
+                    { text: "La tasa de desempleo en una economía.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La inflación representa la pérdida de poder adquisitivo del dinero debido a un aumento sostenido en el nivel general de precios.",
+                socraticCorrect: "Si una empresa opera en un entorno con alta inflación, ¿qué desafíos podría enfrentar en términos de fijación de precios de sus productos, costes de sus insumos y planificación financiera a largo plazo?",
+                explanationIncorrect: "La disminución de precios es deflación. La tasa de desempleo es otro indicador económico importante, pero no define la inflación.",
+                socraticIncorrect: "El glosario (p. 58) y la sección del entorno económico (p. 26) definen la inflación. ¿Hubo alguna confusión con otros conceptos económicos?",
+                page: "26, 58"
+            },
+             {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.2. Análisis del entorno de la empresa",
+                question: "En el 'Entorno sociocultural' (p. 26), ¿por qué es importante para una empresa analizar factores demográficos como la 'migración' y la 'diversidad étnica'?",
+                options: [
+                    { text: "Para entender los cambios en la composición de los consumidores y adaptar productos, servicios y estrategias de comunicación.", isCorrect: true },
+                    { text: "Para influir en las políticas migratorias del gobierno.", isCorrect: false },
+                    { text: "Principalmente para reducir los costes laborales contratando mano de obra extranjera.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Los cambios demográficos, incluyendo la migración y la diversidad, alteran el perfil de los consumidores, sus necesidades, preferencias y formas de comunicarse, lo que requiere que las empresas se adapten para seguir siendo relevantes.",
+                socraticCorrect: "El texto menciona 'conjuntar nichos, es decir, combinar mercados étnicos, de grupos de edad, ingreso y estilos de vida, con alguna característica común para formar un gran mercado' (p. 26). ¿Cómo podría una empresa de alimentos utilizar este enfoque para atender a una población cada vez más diversa?",
+                explanationIncorrect: "Aunque los costes laborales son una consideración, el análisis sociocultural se enfoca en entender al consumidor. Influir en políticas migratorias es una acción política, no el objetivo principal del análisis sociocultural.",
+                socraticIncorrect: "La página 26 explica la relevancia de los factores demográficos. ¿Qué te llevó a pensar en un objetivo diferente para su análisis por parte de la empresa?",
+                page: 26
+            },
+             {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.2. Análisis del entorno de la empresa",
+                question: "El 'Entorno tecnológico' (p. 27) se refiere al conjunto de actuaciones, a menudo gubernamentales, para mejorar el desempeño en el cambio tecnológico a través de la mejora en ¿cuáles tres áreas fundamentales?",
+                options: [
+                    { text: "Investigación, Desarrollo e Innovación (I+D+i).", isCorrect: true },
+                    { text: "Marketing, Finanzas y Recursos Humanos.", isCorrect: false },
+                    { text: "Producción, Logística y Ventas.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! El fomento de la Investigación, el Desarrollo y la Innovación (I+D+i) es clave para el avance tecnológico de un país y, por ende, de sus empresas.",
+                socraticCorrect: "Si el gobierno promueve la 'protección del I+D' (p. 27), por ejemplo, a través de patentes, ¿cómo incentiva esto a las empresas a invertir en la creación de nuevas tecnologías, a pesar de los altos costes y riesgos asociados?",
+                explanationIncorrect: "Marketing, finanzas, RRHH, producción, logística y ventas son funciones empresariales, pero el entorno tecnológico se centra en el avance a través de I+D+i.",
+                socraticIncorrect: "La página 27 es específica sobre las áreas del entorno tecnológico. ¿Con qué otros conceptos relacionaste el fomento de la tecnología?",
+                page: 27
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.2. Análisis del entorno de la empresa",
+                question: "El 'Entorno legal' (p. 27) incluye la legislación relacionada con la 'defensa de la competencia'. ¿Cuál es una de las razones por las que se considera que un contexto competitivo es favorable?",
+                options: [
+                    { text: "Fomenta que los productos y servicios se comercialicen con mayor calidad, precios más ajustados y se persiga la innovación.", isCorrect: true },
+                    { text: "Permite a las empresas dominantes fijar precios altos sin restricciones.", isCorrect: false },
+                    { text: "Reduce la necesidad de las empresas de invertir en desarrollo tecnológico.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La defensa de la competencia busca asegurar un 'juego limpio' que beneficie a los consumidores a través de mejores productos, precios y más innovación por parte de las empresas que compiten por su preferencia.",
+                socraticCorrect: "Si una empresa opera en un sector donde la 'Comisión Nacional de la Competencia (CNC)' (p. 27) es muy activa vigilando prácticas anticompetitivas, ¿cómo podría esto influir en las estrategias de fijación de precios o en los acuerdos de colaboración que la empresa pueda plantear con otras?",
+                explanationIncorrect: "Precisamente, la defensa de la competencia busca evitar abusos de posición dominante. La competencia suele incentivar la inversión tecnológica, no reducirla.",
+                socraticIncorrect: "La página 27 explica los beneficios de la defensa de la competencia. ¿Qué te llevó a pensar en un resultado diferente de un entorno competitivo regulado?",
+                page: 27
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.3. Análisis de la industria o análisis sectorial",
+                question: "Al definir un sector para el análisis, Abell (1980) propone tres dimensiones básicas (p. 28). ¿Cuál de las siguientes NO es una de esas dimensiones?",
+                options: [
+                    { text: "El número de empleados de las empresas del sector.", isCorrect: true },
+                    { text: "Las funciones que desarrollan o necesidades que cubren los productos/servicios.", isCorrect: false },
+                    { text: "La tecnología utilizada para la producción de los bienes.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Abell se centra en QUÉ necesidades se cubren (funciones), CÓMO se cubren (tecnología) y PARA QUIÉN se cubren (grupos de clientes) para definir un sector. El número de empleados es una característica de las empresas, no una dimensión definitoria del sector en este modelo.",
+                socraticCorrect: "Si utilizas el modelo de Abell para definir el sector de 'transporte personal urbano', ¿cómo aplicarías las tres dimensiones (funciones, tecnología, grupos de clientes) para delimitarlo? ¿Qué diferentes 'industrias' podrían caber dentro de esta definición más amplia de sector?",
+                explanationIncorrect: "Las funciones, la tecnología y los grupos de clientes son las tres dimensiones que Abell propone para una definición más precisa del ámbito competitivo.",
+                socraticIncorrect: "La página 28 es clara sobre las dimensiones de Abell. ¿Con qué otro criterio confundiste la definición del sector?",
+                page: 28
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.3. Análisis de la industria o análisis sectorial (Cinco Fuerzas de Porter)",
+                question: "En el análisis de las Cinco Fuerzas de Porter (Figura 3, p. 29), la 'Amenaza de entrada de nuevos competidores' (p. 30) será MENOR si:",
+                options: [
+                    { text: "Existen altas barreras de entrada (ej. economías de escala, alta inversión inicial, lealtad a marcas existentes).", isCorrect: true },
+                    { text: "Existen pocas barreras de entrada al sector.", isCorrect: false },
+                    { text: "Los competidores instalados no reaccionan ante la entrada de nuevos jugadores.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Las barreras de entrada dificultan que nuevas empresas ingresen al sector, protegiendo así la rentabilidad de las ya establecidas. Si es fácil entrar, la amenaza es alta.",
+                socraticCorrect: "Si una industria tiene 'altas barreras de entrada' debido a la necesidad de una 'gran inversión inicial', pero la 'reacción esperada de los competidores instalados' es muy agresiva (ej. guerras de precios), ¿cómo se ponderarían estos dos factores para evaluar la amenaza real de nuevos entrantes?",
+                explanationIncorrect: "Pocas barreras o una reacción pasiva de los instalados AUMENTARÍAN la amenaza de nuevos competidores, no la disminuirían.",
+                socraticIncorrect: "La página 30 explica los factores que influyen en la amenaza de nuevos competidores. ¿Cómo interpretaste el efecto de las barreras de entrada?",
+                page: 30
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.3. Análisis de la industria o análisis sectorial (Cinco Fuerzas de Porter)",
+                question: "La 'Amenaza de productos sustitutivos' (p. 30) se refiere a productos que:",
+                options: [
+                    { text: "Satisfacen las mismas necesidades del cliente, aunque puedan ser de diferentes industrias o tecnologías.", isCorrect: true },
+                    { text: "Son idénticos a los ofrecidos por los competidores directos del sector.", isCorrect: false },
+                    { text: "Son complementarios y se consumen junto con los productos del sector.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Un producto sustitutivo no es un competidor directo que ofrece lo mismo, sino una alternativa diferente que cumple la misma función para el cliente (ej. tren vs. avión para viajar entre ciudades).",
+                socraticCorrect: "Si una empresa vende café en grano (producto), y surgen nuevas máquinas de cápsulas de café muy convenientes (sustituto), ¿qué factores determinarían el 'grado de incidencia' de este producto sustitutivo sobre el negocio del café en grano tradicional (p. 30)?",
+                explanationIncorrect: "Los productos idénticos son de competidores directos. Los complementarios aumentan el valor del producto del sector, no lo sustituyen.",
+                socraticIncorrect: "La página 30 define los productos sustitutivos. ¿Con qué otro tipo de producto o relación confundiste a los sustitutivos?",
+                page: 30
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.3. Análisis de la industria o análisis sectorial (Cinco Fuerzas de Porter)",
+                question: "El 'Poder negociador de los clientes' (p. 31) tiende a ser ALTO cuando:",
+                options: [
+                    { text: "Los clientes están concentrados (pocos y grandes), compran grandes volúmenes y el producto es estándar con bajos costes de cambio.", isCorrect: true },
+                    { text: "Hay muchos clientes pequeños y fragmentados, y pocos proveedores grandes.", isCorrect: false },
+                    { text: "El producto ofrecido por el sector es altamente diferenciado y crítico para el cliente.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Si los clientes son pocos y compran mucho (concentración), y pueden cambiar fácilmente de proveedor porque el producto es similar entre competidores (estándar, bajos costes de cambio), tendrán más poder para exigir precios bajos o mejores condiciones.",
+                socraticCorrect: "Si los clientes tienen un alto poder de negociación y pueden forzar los precios a la baja, ¿qué implicaciones tiene esto para la 'intensidad de la competencia dentro del sector' (otra de las fuerzas de Porter)?",
+                explanationIncorrect: "Si los clientes están fragmentados o el producto es muy diferenciado/crítico, su poder de negociación suele ser menor.",
+                socraticIncorrect: "La página 31 explica cuándo los clientes tienen más poder. ¿Qué factor te llevó a una conclusión diferente sobre su poder de negociación?",
+                page: 31
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.1. Los modelos de negocio",
+                question: "El modelo de negocio propuesto por Osterwalder y Pigneur (p. 31) se integra en cuatro áreas principales. ¿Cuál de las siguientes NO es una de esas cuatro áreas?",
+                options: [
+                    { text: "Competencia.", isCorrect: true },
+                    { text: "Clientes.", isCorrect: false },
+                    { text: "Oferta.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Las cuatro áreas principales que integran los nueve módulos del Business Model Canvas son: Clientes, Oferta, Infraestructura y Viabilidad económica. El análisis de la competencia es externo al modelo de negocio en sí, aunque lo informa.",
+                socraticCorrect: "Si el área de 'Viabilidad económica' considera tanto las 'Fuentes de ingresos' como la 'Estructura de costes' (Figura 5, p. 32), ¿cómo ayuda el entendimiento de estas dos componentes a evaluar si un modelo de negocio es sostenible a largo plazo?",
+                explanationIncorrect: "Clientes, Oferta, Infraestructura y Viabilidad económica son las cuatro áreas clave que estructuran el Business Model Canvas.",
+                socraticIncorrect: "La página 31 menciona las cuatro áreas principales del modelo. ¿Con qué otra agrupación o concepto confundiste una de estas áreas?",
+                page: 31
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.1. Los modelos de negocio",
+                question: "En el Business Model Canvas, el módulo 'Segmentos de mercado' (o 'Segmentos de clientes') se refiere a: (Figura 5, p. 32)",
+                options: [
+                    { text: "Los distintos grupos de personas u organizaciones a los que la empresa se dirige para crear valor.", isCorrect: true },
+                    { text: "Los diferentes productos o servicios que ofrece la empresa.", isCorrect: false },
+                    { text: "Los canales de distribución que utiliza la empresa.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Este módulo define los diferentes grupos de clientes a los que la empresa intenta alcanzar y servir, reconociendo que no todos los clientes son iguales ni buscan lo mismo.",
+                socraticCorrect: "¿Por qué es fundamental para una empresa definir claramente sus 'Segmentos de mercado' antes de diseñar su 'Propuesta de valor' o sus 'Canales de comunicación y comercialización'?",
+                explanationIncorrect: "Los productos/servicios se relacionan más con la 'Propuesta de valor'. Los canales tienen su propio módulo. Los segmentos son los grupos de clientes.",
+                socraticIncorrect: "La Figura 5 (p. 32) muestra los nueve módulos. ¿Qué te llevó a interpretar el módulo de 'Segmentos de mercado' de otra manera?",
+                page: 32
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.1. Los modelos de negocio",
+                question: "El módulo 'Relaciones con los clientes' en el Business Model Canvas (Figura 5, p. 32) describe:",
+                options: [
+                    { text: "El tipo de vínculos que una empresa establece con sus diferentes segmentos de clientes (ej. asistencia personal, autoservicio, comunidades).", isCorrect: true },
+                    { text: "Los principales proveedores de la empresa.", isCorrect: false },
+                    { text: "Las actividades clave que la empresa debe realizar para operar.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Este bloque define cómo la empresa interactúa y construye relaciones con sus clientes, lo cual puede variar mucho dependiendo del segmento y la propuesta de valor (desde un trato muy personalizado hasta interacciones automatizadas).",
+                socraticCorrect: "Si una empresa decide pasar de un modelo de 'asistencia personal' a uno de 'autoservicio' en sus 'Relaciones con los clientes', ¿qué impacto podría tener esto en su 'Estructura de costes' y en la percepción de valor por parte de ciertos segmentos de clientes?",
+                explanationIncorrect: "Los proveedores se asocian más con 'Asociaciones clave'. Las actividades operativas son 'Actividades clave'. Las relaciones se centran en el vínculo con el cliente.",
+                socraticIncorrect: "Cada módulo del Canvas tiene un propósito específico (Figura 5, p. 32). ¿Qué te hizo pensar que las 'Relaciones con los clientes' se referían a otro aspecto del modelo de negocio?",
+                page: 32
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.2. La cadena de valor",
+                question: "¿Cuál de las siguientes es considerada una 'actividad primaria' en la cadena de valor de Porter? (p. 32)",
+                options: [
+                    { text: "Marketing y ventas.", isCorrect: true },
+                    { text: "Desarrollo de tecnología.", isCorrect: false },
+                    { text: "Administración de recursos humanos.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! 'Marketing y ventas' es una actividad primaria porque está directamente implicada en llevar el producto al cliente y facilitar su compra. El desarrollo de tecnología y la administración de RRHH son actividades de apoyo.",
+                socraticCorrect: "La 'Logística externa' (distribución) es otra actividad primaria. ¿Cómo una mejora significativa en la eficiencia de la logística externa podría generar una ventaja competitiva para una empresa que vende productos físicos a nivel nacional?",
+                explanationIncorrect: "El desarrollo de tecnología y la administración de RRHH son actividades de apoyo que sustentan a las primarias.",
+                socraticIncorrect: "La página 32 distingue entre actividades primarias y de apoyo. ¿Qué te hizo clasificar 'Marketing y ventas' de manera diferente?",
+                page: 32
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.2. La cadena de valor",
+                question: "El análisis de la cadena de valor busca identificar fuentes de ventajas competitivas. Una de estas fuentes puede ser 'la interrelación dentro el sistema de valor' (p. 32). ¿A qué se refiere esto?",
+                options: [
+                    { text: "A las sinergias y optimizaciones que se pueden lograr al coordinar las actividades de la cadena de valor de la empresa con las cadenas de valor de sus proveedores y clientes.", isCorrect: true },
+                    { text: "Únicamente a la eficiencia interna de cada actividad aislada.", isCorrect: false },
+                    { text: "A la copia exacta de las actividades de la cadena de valor de los competidores.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Exacto! El 'sistema de valor' incluye no solo la cadena interna de la empresa, sino también cómo esta se integra y coordina con las cadenas de sus proveedores (hacia atrás) y sus distribuidores/clientes (hacia adelante), buscando eficiencias y valor conjunto.",
+                socraticCorrect: "Imagina una empresa fabricante de automóviles. ¿Cómo podría una 'interrelación' más estrecha y coordinada con la cadena de valor de sus 'proveedores' de componentes clave (ej. sistemas de frenos, motores) traducirse en una ventaja competitiva para el fabricante?",
+                explanationIncorrect: "La eficiencia interna es importante (interrelación entre actividades), pero el 'sistema de valor' amplía la perspectiva a las conexiones externas. Copiar no es una fuente sostenible de ventaja.",
+                socraticIncorrect: "La página 32 diferencia entre interrelaciones internas y las del 'sistema de valor'. ¿Qué te resultó confuso en esta distinción?",
+                page: 32
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.3. Recursos y capacidades",
+                question: "Al buscar 'Mejorar la dotación' de recursos y capacidades, una empresa puede optar por la 'Adquisición externa'. ¿Cuál de los siguientes es un ejemplo de adquisición externa de recursos/capacidades? (p. 33)",
+                options: [
+                    { text: "Adquirir una empresa competidora que posee una tecnología deseada.", isCorrect: true },
+                    { text: "Desarrollar una nueva habilidad a través de la formación interna de sus empleados.", isCorrect: false },
+                    { text: "Mejorar la infraestructura organizativa existente mediante la reingeniería de procesos.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Adquirir otra empresa es una forma directa de incorporar externamente los recursos (tecnología, patentes, talento) y capacidades que esta posee.",
+                socraticCorrect: "La 'adquisición de la empresa o de una parte de la misma' es una vía de adquisición externa (p. 33). ¿Cuáles podrían ser algunos riesgos o desafíos asociados con la integración de una empresa adquirida para realmente capturar y aprovechar sus recursos y capacidades?",
+                explanationIncorrect: "La formación interna y la mejora de la infraestructura existente son ejemplos de 'desarrollo interno', no de adquisición externa.",
+                socraticIncorrect: "La página 33 distingue entre adquisición externa y desarrollo interno. ¿Qué te llevó a clasificar la adquisición de una empresa de otra manera?",
+                page: 33
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.3. Recursos y capacidades",
+                question: "La 'Explotación de la dotación' de recursos y capacidades (p. 34) puede orientarse a la estrategia corporativa mediante procesos de diversificación. ¿Qué implica la diversificación en este contexto?",
+                options: [
+                    { text: "Ampliar el campo de actividad de la empresa con nuevos productos o mercados.", isCorrect: true },
+                    { text: "Concentrarse exclusivamente en el producto y mercado actual de la empresa.", isCorrect: false },
+                    { text: "Vender los recursos excedentes a otras empresas no competidoras.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! La diversificación, como estrategia corporativa, implica que la empresa utiliza sus recursos y capacidades para entrar en nuevos negocios, ya sea con nuevos productos para sus mercados actuales, productos actuales para nuevos mercados, o nuevos productos para nuevos mercados.",
+                socraticCorrect: "Si una empresa tiene una capacidad muy fuerte en 'logística y distribución' desarrollada en su negocio actual, ¿cómo podría 'explotar' esta capacidad para diversificarse hacia un nuevo mercado que también requiera una logística eficiente, aunque el producto sea diferente?",
+                explanationIncorrect: "Concentrarse es lo opuesto a diversificar. Vender recursos es una forma de explotación externa, pero la diversificación es una estrategia corporativa de crecimiento.",
+                socraticIncorrect: "La página 34 explica cómo se explotan los recursos en la estrategia corporativa. ¿Qué te confundió sobre el concepto de diversificación?",
+                page: 34
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.4. Las matrices de análisis estratégico",
+                question: "La matriz DAFO (Debilidades, Amenazas, Fortalezas, Oportunidades) (p. 35-36) es una herramienta que:",
+                options: [
+                    { text: "Sintetiza el análisis estratégico interno (Fortalezas, Debilidades) y externo (Oportunidades, Amenazas) para obtener una visión global.", isCorrect: true },
+                    { text: "Se utiliza exclusivamente para analizar la situación financiera de la empresa.", isCorrect: false },
+                    { text: "Define de forma prescriptiva las estrategias exactas que la empresa debe seguir.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! El DAFO es una herramienta de diagnóstico que resume los hallazgos clave del análisis interno (lo que la empresa hace bien o mal) y del análisis externo (lo que el entorno ofrece o amenaza), proporcionando una base para la formulación estratégica.",
+                socraticCorrect: "Un diseño adecuado de la matriz DAFO debería permitir sacar conclusiones sobre 'la forma en la que la estrategia de la empresa puede aprovechar los puntos fuertes y las oportunidades del entorno' (p. 36). ¿Podrías dar un ejemplo de una estrategia que combine una Fortaleza interna con una Oportunidad externa (estrategia FO)?",
+                explanationIncorrect: "El DAFO es más amplio que el análisis financiero y es una herramienta de diagnóstico, no una receta de estrategias. Ayuda a pensar en ellas.",
+                socraticIncorrect: "Las páginas 35-36 explican el propósito y contenido de la matriz DAFO. ¿Qué te llevó a una interpretación diferente de su utilidad?",
+                page: "35-36"
+            },
+            {
+                chapter: "CAPÍTULO 2: ANÁLISIS DEL MERCADO, INDUSTRIA Y NEGOCIO",
+                subtopic: "2.4.4. Las matrices de análisis estratégico",
+                question: "Una 'Debilidad' en un análisis DAFO (Figura 7, p. 36) representa:",
+                options: [
+                    { text: "Un aspecto interno de la organización en el que es inferior a la competencia o que limita su capacidad para alcanzar objetivos.", isCorrect: true },
+                    { text: "Un factor del entorno externo que podría perjudicar a la empresa.", isCorrect: false },
+                    { text: "Una nueva tecnología emergente que la empresa podría adoptar.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Las Debilidades son factores internos que ponen a la empresa en desventaja o le impiden rendir al máximo. Por ejemplo, una tecnología obsoleta, falta de ciertas habilidades, mala reputación, etc.",
+                socraticCorrect: "Si una empresa identifica una 'Debilidad' interna crítica, como 'Resistencia al cambio' (p. 36), ¿qué tipo de acciones o estrategias (considerando las otras partes del DAFO) podría implementar para mitigar o superar esta debilidad?",
+                explanationIncorrect: "Un factor externo perjudicial es una Amenaza. Una nueva tecnología podría ser una Oportunidad (o una Amenaza si no se adopta).",
+                socraticIncorrect: "La Figura 7 (p. 36) y la lógica del DAFO distinguen claramente entre factores internos y externos, positivos y negativos. ¿Con qué otro elemento confundiste una Debilidad?",
+                page: 36
+            },
+            // --- CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL ---
+             {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.1. La dirección: función y niveles",
+                question: "El texto distingue entre las figuras de empresario, propietario y directivo (p. 37). ¿Cuál es la principal función de los directivos en este contexto?",
+                options: [
+                    { text: "Supervisar el proceso de combinación de recursos productivos para aumentar la eficiencia y alcanzar los objetivos fijados por los empresarios/propietarios.", isCorrect: true },
+                    { text: "Ser siempre los únicos dueños del capital de la empresa.", isCorrect: false },
+                    { text: "Definir el marco legal y jurídico en el que opera la empresa.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Exacto! Los directivos son responsables de la gestión operativa y táctica, asegurando que los recursos se utilicen eficientemente para lograr los fines establecidos, que pueden o no coincidir con ser propietarios del capital.",
+                socraticCorrect: "Si 'las mismas [figuras de empresario, propietario y directivo] no siempre coinciden, sobre todo en las grandes empresas' (p. 37), ¿qué desafíos de 'agencia' (vistos en Cap. 1) podrían surgir cuando los directivos no son los principales propietarios?",
+                explanationIncorrect: "Los directivos no necesariamente son propietarios. El marco legal es externo. Su rol es la gestión y supervisión de recursos.",
+                socraticIncorrect: "La página 37 clarifica los roles. ¿Qué te llevó a pensar en una función diferente para los directivos en relación con los propietarios o empresarios?",
+                page: 37
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.1. La dirección: función y niveles",
+                question: "La 'dirección media' (p. 38) se sitúa entre la alta dirección y la dirección de primera línea. ¿Cuál es una de sus responsabilidades clave?",
+                options: [
+                    { text: "Desarrollar las decisiones del nivel superior en su área de responsabilidad, estableciendo objetivos a medio/corto plazo y planificando/controlando acciones.", isCorrect: true },
+                    { text: "Fijar la visión y la misión a largo plazo de toda la organización.", isCorrect: false },
+                    { text: "Realizar el seguimiento diario de las tareas de los empleados operativos.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! La dirección media traduce las estrategias generales de la alta dirección en planes y objetivos más concretos para sus unidades o departamentos, y supervisa a la dirección de primera línea.",
+                socraticCorrect: "El texto dice que la dirección media es el 'enlace jerárquico para la transmisión de las decisiones desde los niveles más altos a los más bajos' (p. 38). ¿Por qué es crucial esta función de 'enlace' para la coherencia y efectividad de la organización?",
+                explanationIncorrect: "La visión y misión son de la alta dirección. El seguimiento diario es de la dirección de primera línea.",
+                socraticIncorrect: "La página 38 describe los roles de cada nivel directivo. ¿Qué te confundió sobre las responsabilidades de la dirección media?",
+                page: 38
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.1. La dirección: función y niveles",
+                question: "La 'dirección de primera línea' (p. 38) está constituida por supervisores o directivos cuya principal responsabilidad es:",
+                options: [
+                    { text: "Garantizar que se cumplen los objetivos fijados por los niveles superiores mediante el seguimiento diario de los empleados que realizan las actividades.", isCorrect: true },
+                    { text: "Analizar las tendencias del mercado para proponer nuevas estrategias corporativas.", isCorrect: false },
+                    { text: "Tomar decisiones sobre fusiones y adquisiciones de otras empresas.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La dirección de primera línea está en contacto directo con los empleados operativos, asegurando que el trabajo diario se realice conforme a los planes y objetivos establecidos por la dirección media y alta.",
+                socraticCorrect: "Si la dirección de primera línea es responsable del 'seguimiento diario de los empleados', ¿qué tipo de habilidades interpersonales (liderazgo, comunicación, motivación) crees que son especialmente importantes para estos directivos?",
+                explanationIncorrect: "El análisis de mercado para estrategias corporativas y las decisiones sobre fusiones son responsabilidad de la alta dirección.",
+                socraticIncorrect: "La página 38 define el rol de la dirección de primera línea. ¿Qué te llevó a atribuirle responsabilidades de niveles directivos superiores?",
+                page: 38
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.2. El proceso de dirección estratégica",
+                question: "En la etapa de 'Formulación estratégica' del proceso de dirección estratégica (p. 39), ¿qué actividad principal realiza la empresa?",
+                options: [
+                    { text: "Proponer distintas alternativas estratégicas (corporativas, de negocio, funcionales), evaluarlas y seleccionar las más idóneas.", isCorrect: true },
+                    { text: "Diagnosticar la situación externa e interna de la empresa.", isCorrect: false },
+                    { text: "Poner en práctica la estrategia seleccionada y controlar sus resultados.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Una vez realizado el análisis, la formulación implica generar opciones estratégicas, analizar su viabilidad y adecuación, y finalmente elegir la(s) estrategia(s) que se implementarán.",
+                socraticCorrect: "Si en la formulación se proponen estrategias a nivel 'corporativo', 'de negocio' y 'funcional', ¿cómo deben estar alineadas estas estrategias entre sí para asegurar la coherencia y el éxito global de la empresa?",
+                explanationIncorrect: "El diagnóstico es del 'Análisis estratégico'. La puesta en práctica y control son de la 'Implantación de la estrategia'.",
+                socraticIncorrect: "La página 39 describe las actividades de cada etapa. ¿Qué te hizo confundir la formulación con otra fase del proceso de dirección estratégica?",
+                page: 39
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.2. El proceso de dirección estratégica",
+                question: "La 'Implantación de la estrategia' (p. 39) es la última fase del proceso. ¿Qué implica esta etapa además de la puesta en práctica?",
+                options: [
+                    { text: "Evaluar si se han conseguido los objetivos planteados en el análisis estratégico y, si es necesario, elaborar un plan estratégico que concrete las decisiones.", isCorrect: true },
+                    { text: "Definir la misión y los valores fundamentales de la empresa.", isCorrect: false },
+                    { text: "Realizar un análisis DAFO exhaustivo de la competencia.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La implantación no es solo ejecutar, sino también medir los resultados contra los objetivos, y a menudo requiere un 'plan estratégico' detallado que guíe la asignación de recursos y las acciones concretas.",
+                socraticCorrect: "El texto menciona que el plan estratégico debe concretar 'cómo afectará la implantación de la estrategia a otras actividades más rutinarias' (p. 39). ¿Por qué es importante considerar este impacto en las operaciones diarias al implantar una nueva estrategia?",
+                explanationIncorrect: "La misión y valores se definen en el análisis estratégico. El DAFO también es parte del análisis. La implantación se centra en la acción y el seguimiento.",
+                socraticIncorrect: "La página 39 detalla lo que conlleva la implantación. ¿Qué aspecto de esta fase te resultó menos claro?",
+                page: 39
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.3.1. El sistema de control",
+                question: "Según Robbins y De Cerezo (1996), el control es el 'proceso de regular actividades que aseguren que se están cumpliendo como fueron planificadas, corrigiendo cualquier desviación significativa' (p. 40). Esto implica que el control es fundamentalmente un proceso:",
+                options: [
+                    { text: "Proactivo y correctivo, que busca mantener el rumbo y ajustar desviaciones.", isCorrect: true },
+                    { text: "Reactivo, que solo actúa después de que ocurren grandes errores.", isCorrect: false },
+                    { text: "Punitiivo, enfocado en sancionar a los responsables de las desviaciones.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Aunque el control implica reaccionar a desviaciones, su naturaleza es también proactiva (al establecer estándares) y fundamentalmente correctiva, buscando reencauzar las actividades hacia los objetivos.",
+                socraticCorrect: "Si un sistema de control detecta una 'desviación significativa', ¿qué tipo de análisis debería realizarse antes de simplemente 'corregir la desviación', para asegurar que la corrección sea efectiva y no solo un parche temporal?",
+                explanationIncorrect: "Aunque puede identificar errores, el control idealmente previene o corrige antes de que sean 'grandes'. Su foco principal no es punitivo, sino la mejora y el ajuste.",
+                socraticIncorrect: "La definición de control en la página 40 enfatiza la regulación y corrección. ¿Qué te llevó a interpretar su naturaleza de otra manera?",
+                page: 40
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.3.1. El sistema de control",
+                question: "En el proceso básico de control (Figura 9, p. 40), ¿cuál es el primer paso esencial antes de medir el desempeño o compararlo?",
+                options: [
+                    { text: "Determinar los estándares de rendimiento o desempeño deseados.", isCorrect: true },
+                    { text: "Tomar medidas correctivas inmediatas.", isCorrect: false },
+                    { text: "Reforzar el esfuerzo positivo realizado.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Sin un estándar o meta clara (que define el nivel deseado de calidad, cantidad, coste, tiempo, etc.), no hay una base contra la cual medir el desempeño real ni identificar desviaciones.",
+                socraticCorrect: "Los estándares deben estar 'en coherencia con los objetivos determinados en la etapa de planificación' (p. 40). ¿Qué problemas podrían surgir si los estándares de control no están alineados con los objetivos estratégicos de la empresa?",
+                explanationIncorrect: "Las medidas correctivas y el refuerzo vienen después de la comparación. El primer paso es definir el 'deber ser'.",
+                socraticIncorrect: "La Figura 9 (p. 40) muestra el flujo del proceso de control. ¿En qué orden pensaste que se debían dar los pasos?",
+                page: 40
+            },
+             {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.3.1. El sistema de control",
+                question: "Robey et al. (1994) señalan tres fuentes principales de información para medir el desempeño (p. 40). ¿Cuál de las siguientes NO es una de esas fuentes?",
+                options: [
+                    { text: "Rumores y comentarios informales de empleados.", isCorrect: true },
+                    { text: "Informes escritos (ej. reportes de ventas, balances).", isCorrect: false },
+                    { text: "Observación personal directa de las actividades.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Las fuentes mencionadas son informes escritos, informes personales (comunicación directa) y observación personal. Los rumores, aunque pueden existir, no son una fuente formal ni fiable para la medición del desempeño en un sistema de control.",
+                socraticCorrect: "Si la 'observación personal' es una fuente de datos para el control, ¿cuáles son algunas ventajas y desventajas de esta fuente en comparación con los 'informes escritos'?",
+                explanationIncorrect: "Los informes escritos y la observación personal son dos de las fuentes citadas. La tercera son los 'informes personales' (comunicación directa).",
+                socraticIncorrect: "La página 40 es específica sobre las fuentes de información para el control. ¿Qué te llevó a pensar que los rumores eran una fuente formal?",
+                page: 40
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.3.2. Administración por objetivos (APO)",
+                question: "Una característica fundamental de la Administración por Objetivos (APO) (p. 41) es que:",
+                options: [
+                    { text: "Los gerentes y sus subordinados fijan juntos las metas de estos últimos, fomentando la participación.", isCorrect: true },
+                    { text: "Los objetivos son fijados unilateralmente por la alta dirección para todos los niveles.", isCorrect: false },
+                    { text: "La evaluación del desempeño se basa únicamente en la antigüedad del empleado.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La APO enfatiza la participación de los empleados en el establecimiento de sus propios objetivos (alineados con los de la organización), lo que busca aumentar el compromiso y la claridad.",
+                socraticCorrect: "La APO implica que 'la fijación de objetivos desciende en cascada a toda la organización' (p. 41). ¿Cómo asegura este proceso en cascada que los objetivos individuales de un empleado contribuyan a los objetivos generales de la empresa y no sean contradictorios?",
+                explanationIncorrect: "La APO promueve la participación en la fijación de objetivos, no la imposición unilateral. La evaluación se basa en el logro de esos objetivos.",
+                socraticIncorrect: "La página 41 describe las etapas de la APO. ¿Qué aspecto de la fijación de metas o la participación te resultó menos claro?",
+                page: 41
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.3.2. Administración por objetivos (APO)",
+                question: "Para que la APO funcione eficazmente, el texto sugiere que es recomendable que (p. 41):",
+                options: [
+                    { text: "Las primas o incentivos estén vinculados al proceso de fijación de metas y su consecución.", isCorrect: true },
+                    { text: "Los objetivos sean vagos y generales para dar flexibilidad.", isCorrect: false },
+                    { text: "La revisión del avance hacia las metas se realice solo una vez al año.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Vincular los incentivos (salariales, ascensos, etc.) al logro de los objetivos acordados en la APO puede motivar a los empleados y reforzar la importancia del sistema.",
+                socraticCorrect: "Si las 'evaluaciones de desempeño' deben ser 'justas, válidas y equitativas' para que la APO funcione (p. 41), ¿qué problemas podrían surgir si los empleados perciben que los objetivos son inalcanzables o que la evaluación no es objetiva?",
+                explanationIncorrect: "Los objetivos en APO suelen ser específicos (SMART). La revisión periódica es clave, no solo anual.",
+                socraticIncorrect: "La página 41 menciona factores para la eficacia de la APO. ¿Qué te llevó a pensar que otro factor era más determinante o que los incentivos no eran importantes?",
+                page: 41
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.3.3. El cuadro de mandos integral (CMI)",
+                question: "El Cuadro de Mando Integral (CMI) se diferencia de los sistemas de control tradicionales porque (p. 41):",
+                options: [
+                    { text: "Evalúa la empresa desde múltiples perspectivas (financiera, cliente, procesos internos, aprendizaje/crecimiento) conectadas con la visión y estrategia.", isCorrect: true },
+                    { text: "Se enfoca exclusivamente en la perspectiva financiera y los resultados pasados.", isCorrect: false },
+                    { text: "Es una herramienta utilizada únicamente por el departamento de contabilidad.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Exacto! El CMI (Balanced Scorecard) va más allá de los indicadores financieros tradicionales, incorporando métricas de otras áreas críticas que impulsan el desempeño futuro y están alineadas con la estrategia.",
+                socraticCorrect: "Si la perspectiva de 'Desarrollo de las personas y el aprendizaje' (p. 42) en un CMI incluye indicadores como 'la capacidad para trabajar en equipo', ¿cómo podría una mejora en esta capacidad impactar positivamente las otras perspectivas (procesos internos, cliente, financiera)?",
+                explanationIncorrect: "Los sistemas tradicionales suelen centrarse en lo financiero. El CMI es una herramienta de gestión estratégica que involucra a múltiples áreas.",
+                socraticIncorrect: "La página 41 explica la naturaleza del CMI. ¿Qué te hizo pensar que su enfoque era similar al de los sistemas de control tradicionales?",
+                page: 41
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.3.3. El cuadro de mandos integral (CMI)",
+                question: "En el CMI, la perspectiva del 'Cliente' (p. 42) está orientada a valorar:",
+                options: [
+                    { text: "Las relaciones que la empresa tiene con sus clientes y las expectativas futuras de estos.", isCorrect: true },
+                    { text: "La rentabilidad de las inversiones realizadas por la empresa.", isCorrect: false },
+                    { text: "La eficiencia de los procesos de producción internos.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Esta perspectiva se centra en cómo ven los clientes a la empresa y qué es importante para ellos (ej. satisfacción, lealtad, tiempo de respuesta, calidad percibida).",
+                socraticCorrect: "Si una empresa mejora sus indicadores en la perspectiva del 'Cliente' (ej. aumenta la satisfacción y la lealtad), ¿cómo se espera que esto se traduzca, a la larga, en mejores resultados en la perspectiva 'Financiera'?",
+                explanationIncorrect: "La rentabilidad de inversiones es de la perspectiva financiera. La eficiencia productiva es de procesos internos.",
+                socraticIncorrect: "La página 42 describe cada una de las cuatro perspectivas del CMI. ¿Con qué otra perspectiva confundiste la del 'Cliente'?",
+                page: 42
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.4. La planificación en la empresa",
+                question: "Según Donnelly et al. (1999), la planificación empresarial comprende acciones gerenciales dirigidas a (p. 43):",
+                options: [
+                    { text: "Determinar los objetivos futuros y los medios más apropiados para lograrlos, escogiendo entre cursos de acción.", isCorrect: true },
+                    { text: "Reaccionar a los problemas a medida que surgen, sin anticipación.", isCorrect: false },
+                    { text: "Mantener la estructura y los procesos de la empresa sin cambios para asegurar la estabilidad.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! La planificación es un proceso proactivo de definir a dónde se quiere llegar (objetivos) y cómo se va a llegar (medios, cursos de acción), lo que implica tomar decisiones anticipadas.",
+                socraticCorrect: "Uno de los beneficios de la planificación es que 'facilita la preparación para el cambio' (p. 43). ¿De qué manera el acto de planificar, aunque el futuro sea incierto, prepara mejor a una organización para enfrentar imprevistos?",
+                explanationIncorrect: "La planificación es inherentemente proactiva y orientada al futuro, no reactiva ni estática.",
+                socraticIncorrect: "La página 43 define la planificación. ¿Qué te llevó a interpretarla como un proceso reactivo o centrado en la inmovilidad?",
+                page: 43
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.4. La planificación en la empresa",
+                question: "Uno de los beneficios de la planificación mencionados en la página 43 es que 'permite el desarrollo de estándares de rendimiento'. ¿Cómo se relaciona esto con la función de control?",
+                options: [
+                    { text: "Los planes, al definir lo que se espera lograr, se convierten en los patrones o estándares contra los cuales se medirá el desempeño real en la función de control.", isCorrect: true },
+                    { text: "No tiene relación, ya que la planificación y el control son funciones completamente separadas.", isCorrect: false },
+                    { text: "Los estándares de rendimiento se desarrollan únicamente durante la ejecución de las tareas, no en la planificación.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Exacto! La planificación establece los objetivos y las metas (los estándares de lo que se considera un buen rendimiento). Luego, la función de control utiliza estos estándares para evaluar si el desempeño real se ajusta a lo planificado.",
+                socraticCorrect: "Si la planificación 'facilita el desarrollo de los gerentes que desarrollan habilidades de toma de decisiones, anticipación del futuro, motivación, etc.' (p. 43), ¿cómo crees que la experiencia de participar en procesos de planificación contribuye a estas habilidades directivas?",
+                explanationIncorrect: "Planificación y control están íntimamente ligados; la planificación proporciona la base para el control. Los estándares se definen idealmente en la planificación.",
+                socraticIncorrect: "La página 43 explica los beneficios de la planificación. ¿Cómo entendiste la relación entre los planes y los estándares de rendimiento?",
+                page: 43
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.5. Etapas de la planificación",
+                question: "Según Henry Fayol (1984), para que la planificación sea eficaz, debe cumplir con el requisito de 'Unidad'. ¿Qué significa esto? (p. 44)",
+                options: [
+                    { text: "Que más de un plan para alcanzar la misma meta puede provocar desorden y confusión; debe haber un plan general coherente.", isCorrect: true },
+                    { text: "Que debe haber múltiples planes para cada meta, para tener alternativas.", isCorrect: false },
+                    { text: "Que todos los empleados deben participar en la elaboración de todos los planes.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Fayol enfatizaba que, para una meta específica, debería existir un plan principal y unificado para evitar la dispersión de esfuerzos, la confusión y las contradicciones que podrían surgir de múltiples planes paralelos no coordinados.",
+                socraticCorrect: "Otro requisito de Fayol es la 'Continuidad', donde los gerentes revisan y reforman los planes para que converjan en un 'solo marco general'. ¿Cómo se relaciona este principio con la necesidad de que la planificación sea también 'Flexible' ante un entorno cambiante?",
+                explanationIncorrect: "La 'Unidad' busca evitar la multiplicidad de planes descoordinados para una misma meta. La participación es importante, pero no es la definición de 'Unidad'.",
+                socraticIncorrect: "La página 44 lista los requisitos de Fayol. ¿Qué te llevó a interpretar el principio de 'Unidad' de otra manera?",
+                page: 44
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.5. Etapas de la planificación",
+                question: "En el proceso de planificación (Figura 11, p. 44), la etapa de 'Establecer premisas de la planificación' implica:",
+                options: [
+                    { text: "Realizar pronósticos o suposiciones sobre el entorno (interno y externo) en el que el plan se desarrollará.", isCorrect: true },
+                    { text: "Definir la misión fundamental de la empresa a largo plazo.", isCorrect: false },
+                    { text: "Convertir los planes cualitativos en cifras y presupuestos detallados.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Las premisas son los supuestos sobre las condiciones futuras que afectarán al plan (ej. crecimiento económico, acciones de la competencia, disponibilidad de recursos). Son la base sobre la que se construyen los planes.",
+                socraticCorrect: "Si las 'premisas de la planificación' resultan ser incorrectas (ej. una crisis económica no prevista), ¿qué importancia adquiere la etapa de 'Establecimiento de planes de contingencia' (p. 44) y cómo ayuda a la empresa a manejar esta situación?",
+                explanationIncorrect: "La misión se define antes. La conversión a cifras es una etapa posterior. Las premisas son los supuestos del entorno.",
+                socraticIncorrect: "La Figura 11 (p. 44) muestra las etapas. ¿Con qué otra actividad confundiste el establecimiento de premisas?",
+                page: 44
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.6. Tipología de planes",
+                question: "Según la Tabla 5 (p. 45), ¿cuál es una diferencia clave entre los 'Planes estratégicos' y los 'Planes operativos' en cuanto a su 'Alcance'?",
+                options: [
+                    { text: "Los estratégicos abarcan todas las actividades de la empresa, mientras que los operativos se centran en actividades concretas.", isCorrect: true },
+                    { text: "Los estratégicos tienen un alcance menor y los operativos un alcance mayor.", isCorrect: false },
+                    { text: "Ambos tipos de planes tienen exactamente el mismo alcance dentro de la organización.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Los planes estratégicos tienen una visión global y de largo plazo, afectando a toda la organización. Los planes operativos son más específicos, detallando cómo se implementarán las estrategias en áreas o actividades concretas y a corto plazo.",
+                socraticCorrect: "Si los 'Planes operativos' dependen de los 'Planes estratégicos' y los instrumentalizan (p. 45), ¿qué problemas podrían surgir si una empresa desarrolla planes operativos detallados sin tener un plan estratégico claro y coherente que los guíe?",
+                explanationIncorrect: "Es al revés: los planes estratégicos son más amplios en alcance que los operativos, que son más focalizados.",
+                socraticIncorrect: "La Tabla 5 (p. 45) compara ambos tipos de planes en varias dimensiones. ¿Qué te llevó a interpretar el 'Alcance' de manera diferente?",
+                page: 45
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.6. Tipología de planes",
+                question: "Dentro de los planes operativos permanentes (p. 46), las 'Políticas' son:",
+                options: [
+                    { text: "Declaraciones o enunciados genéricos que guían y canalizan el pensamiento ante la toma de decisiones.", isCorrect: true },
+                    { text: "Instrucciones detalladas y secuenciales para ejecutar acciones específicas con regularidad.", isCorrect: false },
+                    { text: "Planes cuantificados que detallan resultados esperados en términos numéricos.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Las políticas proporcionan un marco de referencia general para la toma de decisiones, asegurando que estas sean consistentes con los objetivos de la empresa, pero permitiendo cierta discrecionalidad en su aplicación.",
+                socraticCorrect: "Una política podría ser 'promover la promoción interna a puestos superiores' (p. 46). ¿Cómo guía esta política el pensamiento de un gerente de recursos humanos al momento de cubrir una vacante, y qué grado de flexibilidad le permite?",
+                explanationIncorrect: "Las instrucciones detalladas son 'procedimientos'. Los planes cuantificados son 'presupuestos'. Las políticas son guías más generales.",
+                socraticIncorrect: "La página 46 define políticas, procedimientos y reglas. ¿Con qué otro tipo de plan permanente confundiste las políticas?",
+                page: 46
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.6. Tipología de planes",
+                question: "Las 'Reglas', como plan operativo permanente (p. 46), se diferencian de las políticas en que:",
+                options: [
+                    { text: "Las reglas establecen qué situaciones específicas pueden o no llevarse a cabo, sin admitir discrecionalidad alguna.", isCorrect: true },
+                    { text: "Las reglas permiten mucha discrecionalidad y las políticas ninguna.", isCorrect: false },
+                    { text: "Las reglas son más generales y las políticas más específicas.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Exacto! Las reglas son mandatos específicos y no admiten interpretación o flexibilidad en su cumplimiento (ej. 'no fumar en esta área'). Las políticas son guías más amplias.",
+                socraticCorrect: "Si una empresa tiene una 'regla' de 'no utilizar el teléfono móvil personal durante las horas de trabajo en la planta de producción', ¿cómo se diferencia esto de una 'política' que podría ser 'fomentar un uso responsable de los dispositivos personales en el trabajo'?",
+                explanationIncorrect: "Es al revés: las políticas permiten discrecionalidad, las reglas no. Y las políticas suelen ser más generales.",
+                socraticIncorrect: "La página 46 diferencia claramente reglas y políticas. ¿Qué aspecto de su naturaleza o aplicación te resultó confuso?",
+                page: 46
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.6. Tipología de planes",
+                question: "Los 'Programas' y 'Presupuestos' son ejemplos de planes operativos de 'uso único' (p. 46). ¿Qué caracteriza a un presupuesto?",
+                options: [
+                    { text: "Es un plan cuantificado que detalla los resultados esperados en términos numéricos (financieros, horas, unidades, etc.).", isCorrect: true },
+                    { text: "Es un conjunto de especificaciones sobre responsabilidades y asignación de tareas para un proyecto concreto.", isCorrect: false },
+                    { text: "Es una guía general para la acción que se aplica repetidamente a lo largo del tiempo.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! Un presupuesto traduce los planes en cifras, estableciendo objetivos numéricos y asignando recursos financieros o de otro tipo. Sirve también como herramienta de control.",
+                socraticCorrect: "Si un presupuesto es un 'instrumento de control' (p. 46), ¿cómo ayuda la comparación entre las cifras presupuestadas y las cifras reales a los gerentes a tomar decisiones y corregir desviaciones?",
+                explanationIncorrect: "Las especificaciones para un proyecto son más un 'programa'. Una guía repetitiva sería un plan permanente. Los presupuestos son planes numéricos de uso único.",
+                socraticIncorrect: "La página 46 define programas y presupuestos. ¿Con qué otro tipo de plan o concepto confundiste el presupuesto?",
+                page: 46
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.7. Los peligros de la planificación, paradojas",
+                question: "Una de las paradojas de la planificación mencionadas by Mintzberg et al. (1999) (p. 47) es que la planificación requiere incertidumbre, pero si la incertidumbre es muy alta:",
+                options: [
+                    { text: "Lo planificado pierde su validez y puede llevar a decisiones irreales o incoherentes con los cambios.", isCorrect: true },
+                    { text: "La planificación se vuelve aún más precisa y efectiva.", isCorrect: false },
+                    { text: "La empresa ya no necesita asignar recursos a los planes.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Esta es una paradoja central: la planificación intenta gestionar la incertidumbre, pero si el entorno es demasiado volátil e impredecible, los planes rígidos pueden volverse obsoletos rápidamente y ser contraproducentes.",
+                socraticCorrect: "Si la alta incertidumbre puede invalidar los planes, ¿qué tipo de enfoques de planificación (ej. planificación por escenarios, planes de contingencia, planificación adaptativa) crees que podrían ser más útiles para las empresas que operan en entornos muy dinámicos?",
+                explanationIncorrect: "Alta incertidumbre no hace la planificación más precisa, sino más difícil. La asignación de recursos sigue siendo necesaria, aunque el plan deba ser flexible.",
+                socraticIncorrect: "La página 47 describe esta paradoja. ¿Cómo interpretaste la relación entre planificación e incertidumbre?",
+                page: 47
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.7. Los peligros de la planificación, paradojas",
+                question: "¿Cuál es otra de las paradojas o peligros de la planificación mencionados en la página 47, relacionada con la asignación de recursos?",
+                options: [
+                    { text: "Cuanto mayor el horizonte temporal de la planificación, más tiempo estarán comprometidos los recursos escasos, haciendo la planificación más inflexible.", isCorrect: true },
+                    { text: "La planificación siempre genera un exceso de recursos disponibles.", isCorrect: false },
+                    { text: "La planificación elimina la necesidad de coordinar entre diferentes áreas de la empresa.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! Planificar a muy largo plazo implica comprometer recursos (dinero, personas, equipos) durante mucho tiempo. Si el entorno cambia, reasignar esos recursos puede ser difícil y costoso, haciendo que la empresa pierda flexibilidad.",
+                socraticCorrect: "Si la planificación a largo plazo puede llevar a inflexibilidad, pero no planificar a largo plazo puede llevar a decisiones cortoplacistas y falta de dirección estratégica, ¿cómo pueden las empresas encontrar un equilibrio entre tener una visión a largo plazo y mantener la capacidad de adaptarse a corto plazo?",
+                explanationIncorrect: "La planificación no genera exceso de recursos, sino que los asigna. Puede generar problemas de coordinación, no eliminarlos.",
+                socraticIncorrect: "La página 47 lista varios peligros. ¿Con qué otro problema confundiste el relacionado con la inflexibilidad por el compromiso de recursos?",
+                page: 47
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.8. La organización de la empresa",
+                question: "La función de organización, como una de las cuatro funciones administrativas, tiene como objetivo principal (p. 47):",
+                options: [
+                    { text: "Crear una estructura organizativa que permita aprovechar eficaz y eficientemente los recursos.", isCorrect: true },
+                    { text: "Definir los objetivos estratégicos a largo plazo de la empresa.", isCorrect: false },
+                    { text: "Controlar el desempeño de los empleados y corregir desviaciones.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La función de organización se centra en diseñar la estructura de la empresa: cómo se agrupan las tareas, quién reporta a quién, cómo fluye la información, etc., todo para utilizar los recursos de la mejor manera posible.",
+                socraticCorrect: "Si una 'estructura organizativa' es el resultado de la función de organización, ¿cómo crees que una estructura mal diseñada podría impedir que una empresa 'aproveche eficaz y eficientemente los recursos', incluso si tiene buenos empleados y una estrategia clara?",
+                explanationIncorrect: "Definir objetivos es de planificación. Controlar el desempeño es de la función de control.",
+                socraticIncorrect: "La página 47 define el objetivo de la función de organización. ¿Con qué otra función administrativa la confundiste?",
+                page: 47
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.9. Diseño organizativo",
+                question: "El 'diseño organizativo' es el proceso mediante el cual los administradores (p. 47):",
+                options: [
+                    { text: "Crean la estructura de la organización bajo criterios de eficacia y eficiencia, decidiendo cómo coordinar los recursos.", isCorrect: true },
+                    { text: "Determinan los precios de los productos y servicios.", isCorrect: false },
+                    { text: "Analizan las cinco fuerzas competitivas del sector.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! El diseño organizativo es el conjunto de decisiones que dan forma a la estructura de la empresa, buscando la mejor manera de agrupar y coordinar tareas y personas para alcanzar los objetivos fijados en la planificación.",
+                socraticCorrect: "El texto menciona 'factores de contingencia' sobre los que la organización tiene poco o nulo control, pero que afectan el diseño organizativo (p. 47). ¿Podrías nombrar un ejemplo de un factor de contingencia (ej. tecnología, tamaño, entorno) y explicar brevemente cómo podría influir en la estructura que una empresa decide adoptar?",
+                explanationIncorrect: "La fijación de precios es de marketing/comercialización. El análisis de las cinco fuerzas es parte del análisis estratégico externo.",
+                socraticIncorrect: "La página 47 define el diseño organizativo. ¿Qué te llevó a pensar que se refería a otro tipo de decisiones gerenciales?",
+                page: 47
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.1. Dimensión vertical",
+                question: "El principio de 'unidad de mando' (p. 49) en la dimensión vertical del diseño organizativo establece que:",
+                options: [
+                    { text: "Cada subordinado debe tener un único supervisor para evitar conflictos de órdenes.", isCorrect: true },
+                    { text: "Cada supervisor debe tener a su cargo un número ilimitado de subordinados.", isCorrect: false },
+                    { text: "Toda la autoridad de la organización debe concentrarse en una sola persona.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! La unidad de mando busca claridad en las líneas de reporte, evitando que un empleado reciba instrucciones contradictorias de múltiples jefes.",
+                socraticCorrect: "Si bien la 'unidad de mando' busca evitar conflictos, ¿en qué tipo de 'formas organizativas' (que veremos más adelante, como la matricial) podría este principio ser desafiado o flexibilizado, y qué problemas y beneficios podría generar esa flexibilización?",
+                explanationIncorrect: "El número de subordinados se relaciona con el 'tramo de control'. La concentración total de autoridad es centralización extrema, no unidad de mando.",
+                socraticIncorrect: "La página 49 define la unidad de mando. ¿Con qué otro concepto de la estructura vertical lo confundiste?",
+                page: 49
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.1. Dimensión vertical",
+                question: "El 'intervalo, tramo o ámbito de control' (p. 49) se refiere a:",
+                options: [
+                    { text: "El número de subordinados que un responsable puede supervisar de forma eficaz y eficiente.", isCorrect: true },
+                    { text: "El tiempo que un directivo permanece en su puesto.", isCorrect: false },
+                    { text: "El grado de autoridad formal asignado a una posición jerárquica.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! El tramo de control determina cuántas personas reportan directamente a un supervisor. Un tramo amplio significa muchos subordinados por supervisor (estructura más plana), y un tramo estrecho, pocos (estructura más alta).",
+                socraticCorrect: "El texto dice que el número óptimo de tramo de control 'dependerá de factores tales como el tipo de tecnología utilizada, los mecanismos de coordinación predominantes en el departamento, las habilidades del directivo, etc.' (p. 49). ¿Cómo crees que 'las habilidades del directivo' influyen en si puede manejar eficazmente un tramo de control más amplio o más estrecho?",
+                explanationIncorrect: "El tiempo en el puesto o el grado de autoridad son conceptos diferentes. El tramo de control es sobre el número de supervisados.",
+                socraticIncorrect: "La página 49 define el tramo de control. ¿Qué te llevó a interpretarlo de otra manera?",
+                page: 49
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.1. Dimensión vertical",
+                question: "Una estructura organizativa 'plana' (p. 49) se caracteriza por tener tramos de control amplios. Una ventaja de las estructuras planas es (p. 49):",
+                options: [
+                    { text: "Mayor autonomía para los subordinados y canales de comunicación más cortos.", isCorrect: true },
+                    { text: "Mayor control y supervisión directa por parte de los superiores.", isCorrect: false },
+                    { text: "Un mayor número de niveles directivos, lo que facilita la promoción.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Con menos niveles jerárquicos y supervisores con más personas a cargo, las estructuras planas tienden a fomentar la delegación, la autonomía y una comunicación más rápida y directa.",
+                socraticCorrect: "Una desventaja de las estructuras planas puede ser la 'sobrecarga de trabajo en los supervisores' (p. 50). ¿Qué mecanismos de coordinación, además de la supervisión directa, podrían utilizarse en una estructura plana para asegurar que el trabajo se realice correctamente sin sobrecargar excesivamente a los pocos supervisores?",
+                explanationIncorrect: "El mayor control y supervisión directa, y más niveles, son característicos de estructuras 'altas' (tramos estrechos).",
+                socraticIncorrect: "Las páginas 49-50 comparan estructuras altas y planas. ¿Qué te confundió sobre las ventajas de las estructuras planas?",
+                page: "49-50"
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.1. Dimensión vertical",
+                question: "La 'descentralización' en la toma de decisiones (p. 50) implica:",
+                options: [
+                    { text: "Dispersar la autoridad para la toma de decisiones hacia niveles inferiores de la organización.", isCorrect: true },
+                    { text: "Concentrar toda la capacidad de decisión en la cúspide de la organización.", isCorrect: false },
+                    { text: "Eliminar por completo la necesidad de supervisores en la empresa.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! La descentralización ocurre cuando se delega poder de decisión a personas en niveles más bajos de la jerarquía, más cercanas a los problemas o a los clientes.",
+                socraticCorrect: "Una ventaja de la descentralización es que 'dota a la organización y a sus trabajadores de una mayor flexibilidad para actuar ante cambios del entorno' (p. 50). ¿Por qué crees que la toma de decisiones más cercana al 'terreno' permite una respuesta más ágil a los cambios?",
+                explanationIncorrect: "Concentrar la decisión es centralización. Eliminar supervisores es otro concepto (ej. autogestión).",
+                socraticIncorrect: "La página 50 define centralización y descentralización. ¿Qué te llevó a una interpretación diferente de la descentralización?",
+                page: 50
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.2. Dimensión horizontal",
+                question: "La 'división del trabajo' (p. 51) es el proceso mediante el cual una tarea compleja se fracciona en subtareas más simples, cada una realizada por un individuo diferente. Uno de los principales beneficios de esto es:",
+                options: [
+                    { text: "Aumentar la productividad a través del efecto aprendizaje y la especialización.", isCorrect: true },
+                    { text: "Aumentar la variedad de tareas y la motivación intrínseca de cada empleado.", isCorrect: false },
+                    { text: "Reducir la necesidad de coordinación entre los diferentes puestos de trabajo.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Al especializarse en pocas tareas, los individuos tienden a volverse más hábiles y rápidos (efecto aprendizaje), lo que incrementa la productividad general.",
+                socraticCorrect: "Lo contrario de la especialización horizontal es la 'ampliación horizontal', que 'consiste en aumentar el número de tareas diferentes que un puesto determinado ha de realizar' (p. 51). ¿En qué situaciones o para qué tipo de puestos crees que la ampliación podría ser más beneficiosa que la alta especialización, a pesar de una posible pérdida de eficiencia por menor especialización?",
+                explanationIncorrect: "La alta especialización suele reducir la variedad de tareas y puede disminuir la motivación si es excesiva. De hecho, aumenta la necesidad de coordinación.",
+                socraticIncorrect: "La página 51 explica la división del trabajo y sus efectos. ¿Qué te llevó a pensar en un beneficio o consecuencia diferente?",
+                page: 51
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.2. Dimensión horizontal",
+                question: "La 'Departamentalización por función o funcional' (p. 51) consiste en agrupar a personas que:",
+                options: [
+                    { text: "Poseen habilidades similares o usan los mismos tipos de conocimientos/herramientas, agrupándose por funciones básicas (producción, ventas, finanzas, etc.).", isCorrect: true },
+                    { text: "Trabajan en el mismo proyecto o para el mismo tipo de cliente.", isCorrect: false },
+                    { text: "Están ubicadas en la misma área geográfica.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! La departamentalización funcional es una de las formas más comunes y agrupa las actividades según las funciones especializadas que se realizan en la empresa (ej. Departamento de Marketing, Departamento de Operaciones).",
+                socraticCorrect: "Si una empresa está organizada funcionalmente, ¿qué desafíos de coordinación podrían surgir entre el departamento de 'Producción' (enfocado en la eficiencia y estandarización) y el departamento de 'Ventas' (enfocado en satisfacer las demandas específicas de los clientes, que pueden requerir personalización)?",
+                explanationIncorrect: "Agrupar por proyecto o cliente son otros tipos de departamentalización (por producto/cliente). Por área geográfica es departamentalización geográfica.",
+                socraticIncorrect: "La página 51 describe varios criterios de departamentalización. ¿Con qué otro criterio confundiste la departamentalización funcional?",
+                page: 51
+            },
+             {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.2. Dimensión horizontal",
+                question: "La 'Departamentalización geográfica' (p. 52) suele encontrarse en organizaciones que:",
+                options: [
+                    { text: "Operan en áreas geográficas muy amplias, donde las condiciones locales requieren una gestión diferenciada.", isCorrect: true },
+                    { text: "Ofrecen una única línea de productos muy especializada.", isCorrect: false },
+                    { text: "Tienen un número muy reducido de empleados, todos en una misma ubicación.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Cuando una empresa opera en diferentes regiones o países, agrupar las actividades por zona geográfica permite adaptar las operaciones y estrategias a las particularidades de cada mercado local.",
+                socraticCorrect: "Si una empresa multinacional utiliza una departamentalización geográfica, ¿qué mecanismos podría usar la 'sede central' para asegurar que las diferentes divisiones geográficas, aunque actúen con cierta autonomía, sigan alineadas con la estrategia global de la compañía?",
+                explanationIncorrect: "Una línea única de productos podría usar departamentalización funcional. Un número reducido de empleados en una ubicación no justifica la departamentalización geográfica.",
+                socraticIncorrect: "La página 52 explica cuándo se usa la departamentalización geográfica. ¿Qué te llevó a pensar en un contexto diferente para su aplicación?",
+                page: 52
+            },
+             {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.10.2. Dimensión horizontal",
+                question: "La 'Departamentalización por productos' (p. 52) agrupa actividades y personas sobre la base de diferentes productos o líneas de productos. ¿Cuál es una razón por la que una empresa podría adoptar este tipo de departamentalización?",
+                options: [
+                    { text: "Cuando la empresa crece y diversifica sus líneas de productos, permitiendo que cada línea tenga una gestión más enfocada y con visión global de su negocio específico.", isCorrect: true },
+                    { text: "Para maximizar la especialización funcional de sus empleados.", isCorrect: false },
+                    { text: "Para simplificar la estructura organizativa y reducir el número de directivos.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! A medida que las empresas crecen y ofrecen más productos distintos, la departamentalización por productos permite una mayor atención y responsabilidad sobre el rendimiento de cada línea, facilitando la adaptación a las necesidades específicas de cada mercado de producto.",
+                socraticCorrect: "Si una división de producto opera con una 'visión global, así como la autoridad y responsabilidad de la misma' (p. 52), ¿qué tipo de 'funciones de apoyo' (como finanzas o RRHH) podrían seguir centralizadas en la sede corporativa y cuáles podrían descentralizarse a nivel de división de producto?",
+                explanationIncorrect: "La especialización funcional es el objetivo de la departamentalización funcional. Puede no simplificar necesariamente la estructura si hay muchas divisiones.",
+                socraticIncorrect: "La página 52 explica la departamentalización por productos. ¿Qué te confundió sobre sus motivaciones o características?",
+                page: 52
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.11.1. Funcional",
+                question: "Una ventaja de la estructura organizativa funcional (p. 53) es que:",
+                options: [
+                    { text: "Ofrece sinergias de aprendizaje y experiencia dentro de cada función, y economías de escala.", isCorrect: true },
+                    { text: "Facilita la coordinación y comunicación entre diferentes departamentos funcionales.", isCorrect: false },
+                    { text: "Es muy adaptable a entornos dinámicos y productos muy diversificados.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! Agrupar especialistas en la misma función (ej. todos los ingenieros juntos, todos los de marketing juntos) permite compartir conocimientos, desarrollar una alta especialización y lograr eficiencias (economías de escala) en esa función.",
+                socraticCorrect: "Una desventaja de la estructura funcional es que 'dificulta la coordinación entre diferentes unidades y departamentos' (p. 53). ¿Por qué crees que los departamentos funcionales pueden desarrollar 'objetivos de una función o departamento frente a los objetivos de la empresa' (mentalidad de silo)?",
+                explanationIncorrect: "La coordinación *entre* departamentos es una desventaja. Es más adecuada para entornos estables y pocos productos, no para alta diversificación y dinamismo.",
+                socraticIncorrect: "La página 53 lista ventajas y desventajas de la estructura funcional. ¿Qué te llevó a interpretar sus características de otra manera?",
+                page: 53
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.11.2. Divisional",
+                question: "La estructura organizativa divisional (p. 54) agrupa unidades y departamentos en base a 'núcleos de negocio estratégicos' (productos, mercados, áreas geográficas). ¿Cuándo es esta forma más adecuada?",
+                options: [
+                    { text: "Cuando la empresa crece, diversifica sus productos/mercados, y su entorno se hace más cambiante, requiriendo respuestas más ágiles por división.", isCorrect: true },
+                    { text: "Cuando la empresa tiene un solo producto y opera en un mercado local estable.", isCorrect: false },
+                    { text: "Cuando se busca maximizar la centralización de todas las decisiones en la sede central.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! La estructura divisional permite que cada división (producto, mercado, etc.) opere con mayor autonomía y se adapte mejor a las condiciones específicas de su negocio, lo cual es útil en empresas grandes, diversificadas y en entornos dinámicos.",
+                socraticCorrect: "Si una desventaja de la estructura divisional es la 'duplicación de funciones en cada división' (p. 56), ¿cómo puede una empresa mitigar esta ineficiencia sin perder los beneficios de la especialización y enfoque divisional?",
+                explanationIncorrect: "Un solo producto en mercado estable es ideal para la funcional. La divisional implica cierta descentralización a nivel de división.",
+                socraticIncorrect: "La página 54 explica cuándo surge la necesidad de estructuras alternativas como la divisional. ¿Qué te confundió sobre su adecuación?",
+                page: 54
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.11.2. Divisional",
+                question: "En una estructura divisional (Figura 14, p. 55), las divisiones (ej. por producto o área geográfica) se consideran 'autónomas'. ¿Qué significa esto en la práctica?",
+                options: [
+                    { text: "Que pueden tomar decisiones referentes a su unidad de negocio específica, mientras la sede central delimita la estrategia global y conserva funciones centralizadas (ej. financiación).", isCorrect: true },
+                    { text: "Que operan como empresas completamente independientes sin ninguna relación con la sede central.", isCorrect: false },
+                    { text: "Que todas las funciones, incluyendo la estrategia global y la financiación, son gestionadas de forma independiente por cada división.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Así es! La autonomía divisional no es total independencia. Las divisiones gestionan su negocio específico, pero dentro del marco estratégico y con el apoyo (y control) de la sede central, que suele retener funciones corporativas clave.",
+                socraticCorrect: "Si la sede central 'conserva una serie de funciones que proporciona de forma centralizada, como son financiación-inversión' (p. 54), ¿qué ventajas ofrece esta centralización de ciertas funciones para el conjunto de la corporación?",
+                explanationIncorrect: "La autonomía es relativa; existe una coordinación y dependencia de la sede central para la estrategia global y ciertas funciones.",
+                socraticIncorrect: "La página 54 explica el grado de autonomía de las divisiones. ¿Qué te llevó a una interpretación diferente de su relación con la sede central?",
+                page: 54
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.11.3. Matricial",
+                question: "La principal característica distintiva de la estructura organizativa matricial (p. 56-57) es que:",
+                options: [
+                    { text: "Combina dos o más variables de agrupación (ej. funcional y por producto/proyecto) en un mismo nivel, lo que implica una ruptura del principio de unidad de mando.", isCorrect: true },
+                    { text: "Refuerza el principio de unidad de mando, asegurando que cada empleado reporte a un solo jefe.", isCorrect: false },
+                    { text: "Es la estructura más simple y menos costosa de implementar.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Correcto! En una estructura matricial, un empleado puede reportar a dos jefes (ej. un jefe funcional y un jefe de proyecto), lo que rompe la unidad de mando tradicional. Esto busca combinar las ventajas de la especialización funcional con el enfoque en proyectos o productos.",
+                socraticCorrect: "Si la estructura matricial puede 'generar conflicto de órdenes o prioridades' (p. 57) debido a la doble jefatura, ¿qué tipo de habilidades de comunicación, negociación y gestión de conflictos son cruciales tanto para los empleados como para los directivos que operan en este tipo de estructura?",
+                explanationIncorrect: "Precisamente, la matricial rompe la unidad de mando. Suele ser compleja y puede generar costes de coordinación.",
+                socraticIncorrect: "Las páginas 56-57 explican la naturaleza de la estructura matricial. ¿Qué te confundió sobre su característica más definitoria?",
+                page: "56-57"
+            },
+            {
+                chapter: "CAPÍTULO 3: ESTRATEGIA Y ORGANIZACIÓN EMPRESARIAL",
+                subtopic: "3.11.3. Matricial",
+                question: "La estructura matricial se originó con la intención de aprovechar las ventajas de las estructuras funcional y divisional. ¿En qué tipo de entornos o situaciones se considera adecuada (p. 57)?",
+                options: [
+                    { text: "En entornos complejos y dinámicos, donde se requiere flexibilidad y se gestionan múltiples proyectos o productos que necesitan aportes de diversas funciones.", isCorrect: true },
+                    { text: "En entornos simples, estables y con tareas rutinarias.", isCorrect: false },
+                    { text: "En pequeñas empresas con una única línea de productos.", isCorrect: false }
+                ],
+                explanationCorrect: "¡Muy bien! La flexibilidad de la estructura matricial la hace adecuada para entornos que cambian rápidamente y donde se necesita coordinar experticia funcional con la gestión de proyectos o productos específicos, como en empresas tecnológicas o de consultoría.",
+                socraticCorrect: "El texto menciona que la estructura matricial permite 'aprovechar las sinergias funcionales y se evita la competencia o depredación entre diferentes unidades o proyectos' (p. 57). ¿Cómo crees que la doble línea de reporte contribuye a lograr estas sinergias y evitar la 'depredación' entre, por ejemplo, diferentes proyectos que compiten por los mismos recursos funcionales?",
+                explanationIncorrect: "Los entornos simples y estables son más adecuados para estructuras funcionales. Las pequeñas empresas suelen tener estructuras más simples.",
+                socraticIncorrect: "La página 57 indica la adecuación de la estructura matricial. ¿Qué te llevó a pensar en un contexto diferente para su aplicación?",
+                page: 57
+            }
+        ];
+
+        const mainTitleEl = document.getElementById('main-title');
+        const chapterTitleTextEl = document.getElementById('chapter-title-text');
+        const subtopicTextEl = document.getElementById('subtopic-text');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const feedbackAreaEl = document.getElementById('feedback-area');
+        const feedbackHeaderEl = document.getElementById('feedback-header');
+        const explanationTextEl = document.getElementById('explanation-text');
+        const socraticPromptEl = document.getElementById('socratic-prompt');
+        const pageReferenceEl = document.getElementById('page-reference');
+        const nextBtnEl = document.getElementById('next-btn');
+        const progressBarFillEl = document.getElementById('progress-bar-fill');
+        const navigationControlsEl = document.querySelector('.navigation-controls');
+
+        let currentQuestionPool = []; 
+        let currentQuestionIndexInPool = 0;
+        let originalScore = 0; 
+        let incorrectlyAnsweredQuestions = []; 
+        let isRetryMode = false;
+
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startQuiz(questionPool) {
+            currentQuestionPool = [...questionPool]; 
+            currentQuestionIndexInPool = 0;
+            if (!isRetryMode) {
+                originalScore = 0;
+                incorrectlyAnsweredQuestions = [];
+            }
+            mainTitleEl.textContent = "Fundamentos de Administración de Empresas";
+            nextBtnEl.textContent = "Siguiente Pregunta";
+            nextBtnEl.disabled = true;
+            nextBtnEl.onclick = nextQuestionInPool; 
+            
+            
+            const retryButtons = navigationControlsEl.querySelectorAll('.retry-btn');
+            retryButtons.forEach(btn => btn.remove());
+            nextBtnEl.style.display = 'inline-block'; 
+
+            loadQuestion();
+        }
+
+
+        function loadQuestion() {
+            feedbackAreaEl.style.display = 'none';
+            nextBtnEl.disabled = true;
+
+            if (currentQuestionIndexInPool >= currentQuestionPool.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = currentQuestionPool[currentQuestionIndexInPool];
+            chapterTitleTextEl.textContent = currentQuestion.chapter;
+            subtopicTextEl.textContent = currentQuestion.subtopic;
+            questionTextEl.textContent = currentQuestion.question;
+            optionsContainerEl.innerHTML = '';
+
+            
+            let shuffledOptions = [...currentQuestion.options];
+            shuffleArray(shuffledOptions);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.innerText = option.text;
+                
+                button.originalOption = currentQuestion.options.find(o => o.text === option.text);
+                button.addEventListener('click', () => selectAnswer(button.originalOption));
+                optionsContainerEl.appendChild(button);
+            });
+            updateProgressBar();
+        }
+
+        function selectAnswer(selectedOriginalOption) {
+            const currentQuestion = currentQuestionPool[currentQuestionIndexInPool];
+            const buttons = optionsContainerEl.querySelectorAll('button');
+
+            buttons.forEach(button => {
+                button.disabled = true;
+                
+                const originalOpt = currentQuestion.options.find(o => o.text === button.innerText);
+                if (originalOpt.isCorrect) {
+                    button.classList.add('correct');
+                }
+                if (originalOpt.text === selectedOriginalOption.text && !selectedOriginalOption.isCorrect) {
+                    button.classList.add('incorrect');
+                }
+            });
+
+            if (selectedOriginalOption.isCorrect) {
+                if (!isRetryMode) { 
+                    originalScore++;
+                }
+                
+                if (isRetryMode) {
+                    const originalIndex = quizData.indexOf(currentQuestion);
+                    const indexInIncorrectList = incorrectlyAnsweredQuestions.indexOf(originalIndex);
+                    if (indexInIncorrectList > -1) {
+                        incorrectlyAnsweredQuestions.splice(indexInIncorrectList, 1);
+                    }
+                }
+                feedbackHeaderEl.textContent = "¡Respuesta Correcta!";
+                explanationTextEl.textContent = currentQuestion.explanationCorrect;
+                socraticPromptEl.textContent = "Reflexión: " + currentQuestion.socraticCorrect;
+                feedbackAreaEl.className = 'correct-feedback';
+            } else {
+                if (!isRetryMode) { 
+                     const originalIndex = quizData.indexOf(currentQuestion);
+                    if (!incorrectlyAnsweredQuestions.includes(originalIndex)) {
+                        incorrectlyAnsweredQuestions.push(originalIndex);
+                    }
+                }
+                feedbackHeaderEl.textContent = "Respuesta Incorrecta.";
+                const correctAnswerText = currentQuestion.options.find(opt => opt.isCorrect).text;
+                explanationTextEl.innerHTML = `<strong>La respuesta correcta era:</strong> ${correctAnswerText}<br><br>${currentQuestion.explanationIncorrect}`;
+                socraticPromptEl.textContent = "Para pensar: " + currentQuestion.socraticIncorrect;
+                feedbackAreaEl.className = 'incorrect-feedback';
+            }
+
+            pageReferenceEl.textContent = `Encuentra más información en la página: ${currentQuestion.page}.`;
+            feedbackAreaEl.style.display = 'block';
+            nextBtnEl.disabled = false;
+        }
+
+        function nextQuestionInPool() {
+            currentQuestionIndexInPool++;
+            loadQuestion();
+        }
+
+        function showResults() {
+            questionTextEl.textContent = "¡Has completado el juego!";
+            let resultMessage = `Tu puntuación final es: ${originalScore} de ${quizData.length}.`;
+            if(isRetryMode && incorrectlyAnsweredQuestions.length === 0) {
+                resultMessage += "<br>¡Has corregido todas tus respuestas erróneas en el reintento!";
+            } else if (isRetryMode && incorrectlyAnsweredQuestions.length > 0) { // Asegurar que se muestre el mensaje si aún quedan erróneas en modo reintento
+                 resultMessage += `<br>Aún tienes ${incorrectlyAnsweredQuestions.length} pregunta(s) por repasar.`;
+            }
+
+
+            subtopicTextEl.innerHTML = resultMessage; 
+            chapterTitleTextEl.textContent = "Resultados";
+            optionsContainerEl.innerHTML = '';
+            feedbackAreaEl.style.display = 'none';
+            nextBtnEl.style.display = 'none'; 
+
+            
+            const existingRetryButtons = navigationControlsEl.querySelectorAll('.retry-btn');
+            existingRetryButtons.forEach(btn => btn.remove());
+
+            
+            const restartFullGameBtn = document.createElement('button');
+            restartFullGameBtn.textContent = "Reiniciar Juego Completo";
+            restartFullGameBtn.classList.add('retry-btn');
+            restartFullGameBtn.onclick = () => {
+                isRetryMode = false;
+                startQuiz(quizData); 
+            };
+            navigationControlsEl.appendChild(restartFullGameBtn);
+
+            
+            if (incorrectlyAnsweredQuestions.length > 0) {
+                const retryIncorrectBtn = document.createElement('button');
+                retryIncorrectBtn.textContent = `Reintentar ${incorrectlyAnsweredQuestions.length} Errónea(s)`;
+                retryIncorrectBtn.classList.add('retry-btn');
+                retryIncorrectBtn.onclick = () => {
+                    isRetryMode = true;
+                    // Creamos un nuevo pool de preguntas SÓLO con las que necesitan ser reintentadas
+                    // pero mantenemos una referencia a su índice original si fuera necesario
+                    const questionsToRetryObjects = incorrectlyAnsweredQuestions.map(index => quizData[index]);
+                    startQuiz(questionsToRetryObjects);
+                };
+                navigationControlsEl.appendChild(retryIncorrectBtn);
+            }
+             updateProgressBar(true); 
+        }
+
+        function updateProgressBar(isEnd = false) {
+            let progress;
+            if (isEnd) {
+                progress = 100;
+            } else {
+                 // Siempre calcular el progreso basado en el pool de preguntas actual
+                progress = currentQuestionPool.length > 0 ? (currentQuestionIndexInPool / currentQuestionPool.length) * 100 : 0;
+            }
+            progressBarFillEl.style.width = progress + '%';
+            progressBarFillEl.textContent = Math.round(progress) + '%';
+            if (progress === 100) {
+                progressBarFillEl.classList.add('full');
+            } else {
+                progressBarFillEl.classList.remove('full');
+            }
+        }
+
+        startQuiz(quizData); 
+    </script>
+
+</body>
+</html>
